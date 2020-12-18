@@ -19,12 +19,12 @@
 
 #include "main.h"
 
-UART_HandleTypeDef USART1Handle;
-
 uint8_t msg[100] = "UART Test of Board is successful\n\r";
 
 int main(void)
 {
+	UART_HandleTypeDef USART1Handle;
+
 	memset(&USART1Handle, 0, sizeof(USART1Handle));
 
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);
@@ -38,7 +38,7 @@ int main(void)
 	while(1)
 	{
 		WAIT_BTN_PRESS(GPIOA, GPIO_PIN_0);
-		USART_Transmit_IT(&USART1Handle, msg, strlen((char *)msg));
 		Delay_ms(200);
+		USART_Transmit(&USART1Handle, msg, (uint16_t)strlen((char *)msg));
 	}
 }

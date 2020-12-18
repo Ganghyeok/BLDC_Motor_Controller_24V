@@ -19,8 +19,6 @@
 
 #include "main.h"
 
-UART_HandleTypeDef USART1Handle;
-
 uint8_t msg[100] = "UART Test of Board is successful\n\r";
 
 int main(void)

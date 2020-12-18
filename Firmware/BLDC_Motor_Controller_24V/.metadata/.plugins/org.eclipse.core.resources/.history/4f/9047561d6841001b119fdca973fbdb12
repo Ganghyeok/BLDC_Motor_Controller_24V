@@ -19,12 +19,12 @@
 
 #include "main.h"
 
-UART_HandleTypeDef USART1Handle;
-
 uint8_t msg[100] = "UART Test of Board is successful\n\r";
 
 int main(void)
 {
+	UART_HandleTypeDef USART1Handle;
+
 	memset(&USART1Handle, 0, sizeof(USART1Handle));
 
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);

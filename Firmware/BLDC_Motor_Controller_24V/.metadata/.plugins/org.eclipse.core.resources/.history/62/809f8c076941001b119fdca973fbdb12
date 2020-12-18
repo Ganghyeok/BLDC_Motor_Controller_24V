@@ -15,7 +15,7 @@
 #define WAIT_BTN_PRESS(GPIOx, GPIO_PIN_NO)		WAIT_FLAG_CLEAR(GPIOx->IDR, GPIO_PIN_NO)
 
 
-extern UART_HandleTypeDef USART1Handle;
+
 
 extern void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di);
 extern void SystemClock_Config(uint8_t clockFreq);
