@@ -1,0 +1,4 @@
+1605014977361	Delete resource 'BLDC_Motor_Controller_24V'
+1605015795762	Delete resource 'BLDC_Motor_Controller_24V/Src/main.c'
+1605141741448	Delete resource 'BLDC_Motor_Controller_24V/Drivers/Src/stm32f103xx_rcc_driver.c'
+1605141802290	Delete resource 'BLDC_Motor_Controller_24V/Drivers'

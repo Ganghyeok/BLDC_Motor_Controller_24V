@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;BLDC_Motor_Controller_24V/Drivers/Inc/stm32f103xx_tim.h&apos; to &apos;stm32f103xx_tim_driver.h&apos;" description="Rename resource &apos;stm32f103xx_tim.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Drivers/Inc/stm32f103xx_tim.h" name="stm32f103xx_tim_driver.h" stamp="1608270353066" updateReferences="true"/>
+</session>
