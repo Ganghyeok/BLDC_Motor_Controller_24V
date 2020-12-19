@@ -3028,24 +3028,29 @@ typedef struct
  * 																											  *
  **************************************************************************************************************/
 
-#define SET_BIT(REG, BIT)     ((REG) |= (BIT))
+#define SET_BIT(REG, BIT)     			((REG) |= (BIT))
 
-#define CLEAR_BIT(REG, BIT)   ((REG) &= ~(BIT))
+#define CLEAR_BIT(REG, BIT)   			((REG) &= ~(BIT))
 
-#define READ_BIT(REG, BIT)    ((REG) & (BIT))
+#define READ_BIT(REG, BIT)    			((REG) & (BIT))
 
-#define CLEAR_REG(REG)        ((REG) = (0x0))
+#define CLEAR_REG(REG)        			((REG) = (0x0))
 
-#define WRITE_REG(REG, VAL)   ((REG) = (VAL))
+#define WRITE_REG(REG, VAL)   			((REG) = (VAL))
 
-#define READ_REG(REG)         ((REG))
+#define READ_REG(REG)         			((REG))
 
 #define MODIFY_REG(REG, CLEARMASK, SETMASK)  WRITE_REG((REG), (((READ_REG(REG)) & (~(CLEARMASK))) | (SETMASK)))
+
+#define SET_FLAG(REG, FLAG)				SET_BIT(REG, FLAG)
+
+#define CLEAR_FLAG(REG, FLAG)			CLEAR_BIT(REG, FLAG)
 
 #define WAIT_FLAG_SET(REG, FLAG)		do{  while( !((REG) & (FLAG)) ); }while(0)
 
 #define WAIT_FLAG_CLEAR(REG, FLAG)		do{  while( ((REG) & (FLAG)) ); }while(0)
 
+#define GET_FLAG(REG, FLAG)				(((REG) & (FLAG)) == (FLAG))
 
 
 /**************************************************************************************************************

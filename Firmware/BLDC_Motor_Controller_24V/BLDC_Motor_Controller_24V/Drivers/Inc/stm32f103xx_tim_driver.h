@@ -170,13 +170,40 @@ typedef struct
 #define TIM_CHANNEL_ALL                    0x0000003CU                          /*!< Global Capture/compare channel identifier  */
 
 
+/** @defgroup TIM_Interrupt_definition TIM interrupt Definition
+  * @{
+  */
+#define TIM_IT_UPDATE                      TIM_DIER_UIE                         /*!< Update interrupt            */
+#define TIM_IT_CC1                         TIM_DIER_CC1IE                       /*!< Capture/Compare 1 interrupt */
+#define TIM_IT_CC2                         TIM_DIER_CC2IE                       /*!< Capture/Compare 2 interrupt */
+#define TIM_IT_CC3                         TIM_DIER_CC3IE                       /*!< Capture/Compare 3 interrupt */
+#define TIM_IT_CC4                         TIM_DIER_CC4IE                       /*!< Capture/Compare 4 interrupt */
+#define TIM_IT_COM                         TIM_DIER_COMIE                       /*!< Commutation interrupt       */
+#define TIM_IT_TRIGGER                     TIM_DIER_TIE                         /*!< Trigger interrupt           */
+#define TIM_IT_BREAK                       TIM_DIER_BIE                         /*!< Break interrupt             */
+
+
 /**************************************************************************************************************
  * 																											  *
  * 												User Macro Definition										  *
  * 									  																		  *
  **************************************************************************************************************/
+#define TIM_ENABLE_COUNTER(__HANDLE__)                 ((__HANDLE__)->Instance->CR1|=(TIM_CR1_CEN))
 
+#define TIM_DISABLE_COUNTER(__HANDLE__) \
+  do { \
+    if (((__HANDLE__)->Instance->CCER & TIM_CCER_CCxE_MASK) == 0UL) \
+    { \
+      if(((__HANDLE__)->Instance->CCER & TIM_CCER_CCxNE_MASK) == 0UL) \
+      { \
+        (__HANDLE__)->Instance->CR1 &= ~(TIM_CR1_CEN); \
+      } \
+    } \
+  } while(0)
 
+#define TIM_ENABLE_IT(__HANDLE__, __INTERRUPT__)    ((__HANDLE__)->Instance->DIER |= (__INTERRUPT__))
+
+#define TIM_DISABLE_IT(__HANDLE__, __INTERRUPT__)   ((__HANDLE__)->Instance->DIER &= ~(__INTERRUPT__))
 
 /**************************************************************************************************************
  * 																											  *
@@ -205,6 +232,6 @@ void TIM_Base_MspInit(TIM_TypeDef *TIMx);
 void TIM_PeripheralClockControl(TIM_TypeDef *TIMx, uint8_t En_or_Di);
 void TIM_PWM_ConfigChannel(TIM_HandleTypeDef *pTIMHandle, TIM_OC_InitTypeDef *sConfig, uint32_t Channel);
 void TIM_PWM_Start(TIM_HandleTypeDef *pTIMHandle, uint32_t Channel);
-
+void TIM_IRQHandling(TIM_HandleTypeDef *pTIMHandle);
 
 #endif /* INC_STM32F103XX_TIM_DRIVER_H_ */

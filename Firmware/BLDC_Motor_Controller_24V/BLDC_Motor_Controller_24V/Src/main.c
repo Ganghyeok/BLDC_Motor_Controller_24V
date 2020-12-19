@@ -19,26 +19,27 @@
 
 #include "main.h"
 
-UART_HandleTypeDef USART1Handle;
 
-uint8_t msg[100] = "UART Test of Board is successful\n\r";
+TIM_HandleTypeDef TIM6Handle;
+
 
 int main(void)
 {
-	memset(&USART1Handle, 0, sizeof(USART1Handle));
-
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);
 
 	GPIOTest_Init();
 
-	UART1_Init(&USART1Handle);
+	memset(&TIM6Handle, 0, sizeof(TIM6Handle));
 
-	NVIC_IRQConfig(IRQ_NO_USART1, NVIC_PRIOR_8, ENABLE);
+	TIM6_Init(&TIM6Handle);
+
+	NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
+	TIM_ENABLE_IT(&TIM6Handle, TIM_IT_UPDATE);
+	TIM_ENABLE_COUNTER(&TIM6Handle);
+
 
 	while(1)
 	{
-		WAIT_BTN_PRESS(GPIOA, GPIO_PIN_0);
-		USART_Transmit_IT(&USART1Handle, msg, strlen((char *)msg));
-		Delay_ms(200);
+
 	}
 }

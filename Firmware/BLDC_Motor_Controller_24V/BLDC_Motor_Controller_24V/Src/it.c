@@ -10,5 +10,11 @@
 
 void USART1_IRQHandler(void)
 {
-	USART_IRQHandling(&USART1Handle);
+
+}
+
+
+void TIM6_IRQHandler(void)
+{
+	TIM_IRQHandling(&TIM6Handle);
 }

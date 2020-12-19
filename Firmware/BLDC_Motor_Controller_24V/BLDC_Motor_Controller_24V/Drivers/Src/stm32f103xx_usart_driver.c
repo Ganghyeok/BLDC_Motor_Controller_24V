@@ -208,7 +208,7 @@ __weak void USART_ApplicationEventCallback(UART_HandleTypeDef *pUSARTHandle, uin
 
 void USART_IRQHandling(UART_HandleTypeDef *pUSARTHandle)
 {
-	// Interrupt handling for USART
+	/* Interrupt handling for USART */
 
 	uint32_t temp1, temp2;
 

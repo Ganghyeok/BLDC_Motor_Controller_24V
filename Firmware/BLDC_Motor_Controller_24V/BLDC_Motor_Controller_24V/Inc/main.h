@@ -11,11 +11,11 @@
 #include "stm32f103xx.h"
 
 
-
 #define WAIT_BTN_PRESS(GPIOx, GPIO_PIN_NO)		WAIT_FLAG_CLEAR(GPIOx->IDR, GPIO_PIN_NO)
 
 
-extern UART_HandleTypeDef USART1Handle;
+extern TIM_HandleTypeDef TIM6Handle;
+
 
 extern void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di);
 extern void SystemClock_Config(uint8_t clockFreq);
@@ -23,5 +23,7 @@ extern void Delay_us(uint32_t time_us);
 extern void Delay_ms(uint32_t time_ms);
 extern void GPIOTest_Init(void);
 extern void UART1_Init(UART_HandleTypeDef *pUARTHandle);
+extern void TIM6_Init(TIM_HandleTypeDef *pTIMHandle);
+
 
 #endif /* MAIN_H_ */

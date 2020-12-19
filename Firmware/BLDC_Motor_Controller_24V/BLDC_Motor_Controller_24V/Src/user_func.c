@@ -39,7 +39,6 @@ void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di)
 	}
 
 	// IRQ Priority configuration
-
 	NVIC->IPR[IRQNumber] |= (IRQPriority << 4);
 }
 
@@ -247,4 +246,17 @@ void UART1_Init(UART_HandleTypeDef *pUARTHandle)
 	pUARTHandle->State = USART_STATE_READY;
 
 	USART_Init(pUARTHandle);
+}
+
+
+void TIM6_Init(TIM_HandleTypeDef *pTIMHandle)
+{
+	pTIMHandle->Instance = TIM6;
+	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
+	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	pTIMHandle->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	pTIMHandle->Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
+	pTIMHandle->Init.Period = (2000-1);	// 10kHz / 2000 = 5Hz
+	pTIMHandle->Init.RepetitionCounter = 0;
+	TIM_Base_Init(pTIMHandle);
 }
