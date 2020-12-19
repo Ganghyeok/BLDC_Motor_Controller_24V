@@ -17,8 +17,6 @@
 
 void TIM_Base_Init(TIM_HandleTypeDef *pTIMHandle)
 {
-	uint32_t temp = 0;
-
 	// 1. Check state of TIMx is RESET
 	if(pTIMHandle->State != TIM_STATE_RESET)
 	{
@@ -29,25 +27,11 @@ void TIM_Base_Init(TIM_HandleTypeDef *pTIMHandle)
 	// 2. Init Low level hardware of TIM : GPIO, CLOCK
 	TIM_Base_MspInit(pTIMHandle->Instance);
 
-	// 3. Configure counter mode
-	temp |= pTIMHandle->Init.CounterMode;
+	// 3. Set the Time Base configuration
+	TIM_Base_SetConfig(pTIMHandle);
 
-	// 4. Decide the use of Auto-reload preload
-	temp |= pTIMHandle->Init.AutoReloadPreload;
-
-	MODIFY_REG(pTIMHandle->Instance->CR1, (TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE), temp);
-
-	// 5. Configure ARR value
-	pTIMHandle->Instance->ARR = (uint32_t)pTIMHandle->Init.Period;
-
-	// 6. Configure Prescaler value
-	pTIMHandle->Instance->PSC = pTIMHandle->Init.Prescaler;
-
-	// 7. Configure Repetition counter value
-	pTIMHandle->Instance->RCR = pTIMHandle->Init.RepetitionCounter;
-
-	// 8. Generate update event to reload some registers
-	pTIMHandle->Instance->EGR |= TIM_EGR_UG;
+	// 4. Init the TIM state
+	pTIMHandle->State = TIM_STATE_READY;
 }
 
 
@@ -65,32 +49,62 @@ __weak void TIM_Base_MspInit(TIM_TypeDef *TIMx)
 
 
 
-void TIM_PeripheralClockControl(TIM_TypeDef *TIMx, uint8_t En_or_Di)
+void TIM_PWM_Init(TIM_HandleTypeDef *pTIMHandle)
 {
-	if(En_or_Di == ENABLE)
+	// 1. Check state of TIMx is RESET
+	if(pTIMHandle->State != TIM_STATE_RESET)
 	{
-		if(TIMx == TIM1)		RCC_TIM1_CLK_ENABLE();
-		else if(TIMx == TIM2)	RCC_TIM2_CLK_ENABLE();
-		else if(TIMx == TIM3)	RCC_TIM3_CLK_ENABLE();
-		else if(TIMx == TIM4)	RCC_TIM4_CLK_ENABLE();
-		else if(TIMx == TIM5)	RCC_TIM5_CLK_ENABLE();
-		else if(TIMx == TIM6)	RCC_TIM6_CLK_ENABLE();
-		else if(TIMx == TIM7)	RCC_TIM7_CLK_ENABLE();
-		else if(TIMx == TIM8)	RCC_TIM8_CLK_ENABLE();
+		// State of TIMx is not RESET
+		return;
 	}
-	else if(En_or_Di == DISABLE)
-	{
-		if(TIMx == TIM1)		RCC_TIM1_CLK_DISABLE();
-		else if(TIMx == TIM2)	RCC_TIM2_CLK_DISABLE();
-		else if(TIMx == TIM3)	RCC_TIM3_CLK_DISABLE();
-		else if(TIMx == TIM4)	RCC_TIM4_CLK_DISABLE();
-		else if(TIMx == TIM5)	RCC_TIM5_CLK_DISABLE();
-		else if(TIMx == TIM6)	RCC_TIM6_CLK_DISABLE();
-		else if(TIMx == TIM7)	RCC_TIM7_CLK_DISABLE();
-		else if(TIMx == TIM8)	RCC_TIM8_CLK_DISABLE();
-	}
+
+	// 2. Init Low level hardware of TIM : GPIO, CLOCK
+	TIM_PWM_MspInit(pTIMHandle);
+
+	// 3. Set the Time Base configuration
+	TIM_Base_SetConfig(pTIMHandle);
+
+	// 4. Init the TIM state
+	pTIMHandle->State = TIM_STATE_READY;
 }
 
+
+__weak void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle)
+{
+	/* Prevent unused argument(s) compilation warning */
+		UNUSED(pTIMHandle);
+
+	/* NOTE : This function should not be modified, when the callback is needed,
+	 * 		  the TIM_PWM_MspInit could be implemented in the user file
+	 * 		  (This is a weak implementation. The user application may override this function)
+	 */
+}
+
+
+void TIM_Base_SetConfig(TIM_HandleTypeDef *pTIMHandle)
+{
+	uint32_t temp = 0;
+
+	// 1. Configure counter mode
+	temp |= pTIMHandle->Init.CounterMode;
+
+	// 2. Decide the use of Auto-reload preload
+	temp |= pTIMHandle->Init.AutoReloadPreload;
+
+	MODIFY_REG(pTIMHandle->Instance->CR1, (TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE), temp);
+
+	// 3. Configure ARR value
+	pTIMHandle->Instance->ARR = (uint32_t)pTIMHandle->Init.Period;
+
+	// 4. Configure Prescaler value
+	pTIMHandle->Instance->PSC = pTIMHandle->Init.Prescaler;
+
+	// 5. Configure Repetition counter value
+	pTIMHandle->Instance->RCR = pTIMHandle->Init.RepetitionCounter;
+
+	// 6. Generate update event to reload some registers
+	pTIMHandle->Instance->EGR |= TIM_EGR_UG;
+}
 
 
 void TIM_PWM_ConfigChannel(TIM_HandleTypeDef *pTIMHandle, TIM_OC_InitTypeDef *sConfig, uint32_t Channel)
@@ -179,9 +193,34 @@ void TIM_PWM_ConfigChannel(TIM_HandleTypeDef *pTIMHandle, TIM_OC_InitTypeDef *sC
 		default :
 			break;
 	}
-
 }
 
+
+void TIM_PeripheralClockControl(TIM_TypeDef *TIMx, uint8_t En_or_Di)
+{
+	if(En_or_Di == ENABLE)
+	{
+		if(TIMx == TIM1)		RCC_TIM1_CLK_ENABLE();
+		else if(TIMx == TIM2)	RCC_TIM2_CLK_ENABLE();
+		else if(TIMx == TIM3)	RCC_TIM3_CLK_ENABLE();
+		else if(TIMx == TIM4)	RCC_TIM4_CLK_ENABLE();
+		else if(TIMx == TIM5)	RCC_TIM5_CLK_ENABLE();
+		else if(TIMx == TIM6)	RCC_TIM6_CLK_ENABLE();
+		else if(TIMx == TIM7)	RCC_TIM7_CLK_ENABLE();
+		else if(TIMx == TIM8)	RCC_TIM8_CLK_ENABLE();
+	}
+	else if(En_or_Di == DISABLE)
+	{
+		if(TIMx == TIM1)		RCC_TIM1_CLK_DISABLE();
+		else if(TIMx == TIM2)	RCC_TIM2_CLK_DISABLE();
+		else if(TIMx == TIM3)	RCC_TIM3_CLK_DISABLE();
+		else if(TIMx == TIM4)	RCC_TIM4_CLK_DISABLE();
+		else if(TIMx == TIM5)	RCC_TIM5_CLK_DISABLE();
+		else if(TIMx == TIM6)	RCC_TIM6_CLK_DISABLE();
+		else if(TIMx == TIM7)	RCC_TIM7_CLK_DISABLE();
+		else if(TIMx == TIM8)	RCC_TIM8_CLK_DISABLE();
+	}
+}
 
 
 void TIM_PWM_Start(TIM_HandleTypeDef *pTIMHandle, uint32_t Channel)
@@ -215,9 +254,21 @@ void TIM_IRQHandling(TIM_HandleTypeDef *pTIMHandle)
 	{
 		// This interrupt is generated by Update Event
 
-		GPIO_TogglePin(GPIOA, GPIO_PIN_1);
-
 		CLEAR_FLAG(TIM6->SR, TIM_SR_UIF);
-	}
 
+		TIM_PeriodElapsedCallback(pTIMHandle);
+	}
+}
+
+
+
+__weak void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
+{
+	/* Prevent unused argument(s) compilation warning */
+		UNUSED(pTIMHandle);
+
+	/* NOTE : This function should not be modified, when the callback is needed,
+	 * 		  the TIM_PeriodElapsedCallback could be implemented in the user file
+	 * 		  (This is a weak implementation. The user application may override this function)
+	 */
 }

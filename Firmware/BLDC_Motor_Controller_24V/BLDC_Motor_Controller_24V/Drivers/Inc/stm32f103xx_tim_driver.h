@@ -205,6 +205,12 @@ typedef struct
 
 #define TIM_DISABLE_IT(__HANDLE__, __INTERRUPT__)   ((__HANDLE__)->Instance->DIER &= ~(__INTERRUPT__))
 
+#define TIM_SET_COMPARE(HANDLE, CHANNEL, COMPARE) \
+  (((CHANNEL) == TIM_CHANNEL_1) ? ((HANDLE)->Instance->CCR1 = (COMPARE)) :\
+   ((CHANNEL) == TIM_CHANNEL_2) ? ((HANDLE)->Instance->CCR2 = (COMPARE)) :\
+   ((CHANNEL) == TIM_CHANNEL_3) ? ((HANDLE)->Instance->CCR3 = (COMPARE)) :\
+   ((HANDLE)->Instance->CCR4 = (COMPARE)))
+
 /**************************************************************************************************************
  * 																											  *
  * 												User Macro Function											  *
@@ -229,9 +235,15 @@ typedef struct
 
 void TIM_Base_Init(TIM_HandleTypeDef *pTIMHandle);
 void TIM_Base_MspInit(TIM_TypeDef *TIMx);
+void TIM_PWM_Init(TIM_HandleTypeDef *pTIMHandle);
+void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle);
+void TIM_Base_SetConfig(TIM_HandleTypeDef *pTIMHandle);
+void TIM_PWM_ConfigChannel(TIM_HandleTypeDef *pTIMHandle, TIM_OC_InitTypeDef *sConfig, uint32_t Channel);
 void TIM_PeripheralClockControl(TIM_TypeDef *TIMx, uint8_t En_or_Di);
 void TIM_PWM_ConfigChannel(TIM_HandleTypeDef *pTIMHandle, TIM_OC_InitTypeDef *sConfig, uint32_t Channel);
 void TIM_PWM_Start(TIM_HandleTypeDef *pTIMHandle, uint32_t Channel);
 void TIM_IRQHandling(TIM_HandleTypeDef *pTIMHandle);
+void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle);
+
 
 #endif /* INC_STM32F103XX_TIM_DRIVER_H_ */

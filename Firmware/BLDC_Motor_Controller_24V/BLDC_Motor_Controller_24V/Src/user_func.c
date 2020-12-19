@@ -243,7 +243,6 @@ void UART1_Init(UART_HandleTypeDef *pUARTHandle)
 	pUARTHandle->Init.StopBits = UART_STOPBITS_1;
 	pUARTHandle->Init.HwFlowCtl = UART_HWCONTROL_NONE;
 	pUARTHandle->Init.WordLength = UART_WORDLENGTH_8B;
-	pUARTHandle->State = USART_STATE_READY;
 
 	USART_Init(pUARTHandle);
 }
@@ -251,6 +250,7 @@ void UART1_Init(UART_HandleTypeDef *pUARTHandle)
 
 void TIM6_Init(TIM_HandleTypeDef *pTIMHandle)
 {
+	// Init TIM6 Base
 	pTIMHandle->Instance = TIM6;
 	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
 	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -259,4 +259,49 @@ void TIM6_Init(TIM_HandleTypeDef *pTIMHandle)
 	pTIMHandle->Init.Period = (2000-1);	// 10kHz / 2000 = 5Hz
 	pTIMHandle->Init.RepetitionCounter = 0;
 	TIM_Base_Init(pTIMHandle);
+
+	// Configure the NVIC IRQ for TIM6
+	NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
+
+	// Enable TIM6 interrupt for Update Event
+	TIM_ENABLE_IT(&TIM6Handle, TIM_IT_UPDATE);
+
+	// Enable TIM6 Counter
+	TIM_ENABLE_COUNTER(&TIM6Handle);
+}
+
+
+void TIM1_Init(TIM_HandleTypeDef *pTIMHandle)
+{
+	pTIMHandle->Instance = TIM1;
+	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
+	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	pTIMHandle->Init.Prescaler = (720-1);	//   72MHz / 720 = 100kHz
+	pTIMHandle->Init.Period = (10-1);		//   100kHz / 10 = 10kHz
+	TIM_PWM_Init(pTIMHandle);
+
+	TIM_OC_InitTypeDef TIM1_PWMConfig;
+
+	memset(&TIM1_PWMConfig, 0, sizeof(TIM1_PWMConfig));
+
+	TIM1_PWMConfig.OCMode = TIM_OCMODE_PWM1;
+	TIM1_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+
+	TIM1_PWMConfig.Pulse = 2;	// (2/10)*100 = 20% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_1);
+
+	TIM1_PWMConfig.Pulse = 4;	// (4/10)*100 = 40% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_2);
+
+	TIM1_PWMConfig.Pulse = 6;	// (6/10)*100 = 60% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_3);
+
+	TIM1_PWMConfig.Pulse = 8;	// (8/10)*100 = 80% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_4);
+}
+
+
+void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
+{
+	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
 }

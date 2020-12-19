@@ -21,7 +21,7 @@
 
 
 TIM_HandleTypeDef TIM6Handle;
-
+TIM_HandleTypeDef TIM1Handle;
 
 int main(void)
 {
@@ -30,16 +30,22 @@ int main(void)
 	GPIOTest_Init();
 
 	memset(&TIM6Handle, 0, sizeof(TIM6Handle));
+	memset(&TIM1Handle, 0, sizeof(TIM1Handle));
 
 	TIM6_Init(&TIM6Handle);
+	TIM1_Init(&TIM1Handle);
 
-	NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
-	TIM_ENABLE_IT(&TIM6Handle, TIM_IT_UPDATE);
-	TIM_ENABLE_COUNTER(&TIM6Handle);
-
+	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_1);
+	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_2);
+	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_3);
+	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_4);
 
 	while(1)
 	{
-
+		for(int i=0; i<=10; i++)
+		{
+			TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_1, (uint16_t)i);
+			Delay_ms(100);
+		}
 	}
 }

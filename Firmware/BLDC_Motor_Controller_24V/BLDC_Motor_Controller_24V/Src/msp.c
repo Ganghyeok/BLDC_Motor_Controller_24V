@@ -41,22 +41,30 @@ void USART_MspInit(USART_TypeDef *USARTx)
 
 void TIM_Base_MspInit(TIM_TypeDef *TIMx)
 {
-//	// 1. Configure GPIO for TIM
-//
-//	GPIO_HandleTypeDef TIMx_GPIOHandle;
-//
-//	memset(&TIMx_GPIOHandle, 0, sizeof(TIMx_GPIOHandle));
-//
-//	if(TIMx == TIM1)
-//	{
-//		TIMx_GPIOHandle.Instance = GPIOA;
-//		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11;
-//		TIMx_GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
-//		TIMx_GPIOHandle.Init.Pull = GPIO_NOPULL;
-//		TIMx_GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_MEDIUM;
-//		GPIO_Init(GPIOA, &TIMx_GPIOHandle.Init);
-//	}
-//
-//	// 2. Configure CLOCK for TIM
+	// 1. Configure GPIO for TIM
+
+	// 2. Configure CLOCK for TIM
 	TIM_PeripheralClockControl(TIMx, ENABLE);
+}
+
+
+void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle)
+{
+	// 1. Configure the GPIO for TIM
+	GPIO_HandleTypeDef TIMx_GPIOHandle;
+
+	memset(&TIMx_GPIOHandle, 0, sizeof(TIMx_GPIOHandle));
+
+	if(pTIMHandle->Instance == TIM1)
+	{
+		TIMx_GPIOHandle.Instance = GPIOA;
+		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11;
+		TIMx_GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
+		TIMx_GPIOHandle.Init.Pull = GPIO_NOPULL;
+		TIMx_GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+		GPIO_Init(GPIOA, &TIMx_GPIOHandle.Init);
+	}
+
+	// 2. Configure CLOCK for TIM
+	TIM_PeripheralClockControl(pTIMHandle->Instance, ENABLE);
 }

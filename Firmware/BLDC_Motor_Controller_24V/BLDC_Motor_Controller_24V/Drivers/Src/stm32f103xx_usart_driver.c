@@ -49,6 +49,9 @@ void USART_Init(UART_HandleTypeDef *pUSARTHandle)
 
 	// USARTx Enable for configuration
 	USART_PeripheralControl(pUSARTHandle->Instance, ENABLE);
+
+	// Init the USART state
+	pUSARTHandle->State = USART_STATE_READY;
 }
 
 
