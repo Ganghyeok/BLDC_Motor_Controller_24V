@@ -16,6 +16,7 @@
 
 extern TIM_HandleTypeDef TIM6Handle;
 extern TIM_HandleTypeDef TIM1Handle;
+extern TIM_HandleTypeDef TIM3Handle;
 
 
 extern void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di);
@@ -26,6 +27,7 @@ extern void GPIOTest_Init(void);
 extern void UART1_Init(UART_HandleTypeDef *pUARTHandle);
 extern void TIM6_Init(TIM_HandleTypeDef *pTIMHandle);
 extern void TIM1_Init(TIM_HandleTypeDef *pTIMHandle);
+extern void TIM3_Init(TIM_HandleTypeDef *pTIMHandle);
 extern void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle);
 
 #endif /* MAIN_H_ */

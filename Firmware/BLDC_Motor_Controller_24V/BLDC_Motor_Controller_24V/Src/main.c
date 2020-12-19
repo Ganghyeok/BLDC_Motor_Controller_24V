@@ -22,6 +22,7 @@
 
 TIM_HandleTypeDef TIM6Handle;
 TIM_HandleTypeDef TIM1Handle;
+TIM_HandleTypeDef TIM3Handle;
 
 int main(void)
 {
@@ -34,11 +35,21 @@ int main(void)
 
 	TIM6_Init(&TIM6Handle);
 	TIM1_Init(&TIM1Handle);
+	TIM3_Init(&TIM3Handle);
 
 	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_1);
 	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_2);
 	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_3);
 	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_4);
+
+	TIM_PWM_Start(&TIM3Handle, TIM_CHANNEL_1);
+	TIM_PWM_Start(&TIM3Handle, TIM_CHANNEL_2);
+	TIM_PWM_Start(&TIM3Handle, TIM_CHANNEL_3);
+	TIM_PWM_Start(&TIM3Handle, TIM_CHANNEL_4);
+
+	// Remap port of TIM3
+	RCC_AFIO_CLK_ENABLE();
+	AFIO_REMAP_TIM3_ENABLE();
 
 	while(1)
 	{

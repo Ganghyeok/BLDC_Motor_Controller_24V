@@ -153,6 +153,15 @@ typedef struct
 										(x == GPIOE) ? RCC_GPIOE_CLK_ENABLE() : \
 										(x == GPIOF) ? RCC_GPIOF_CLK_ENABLE() : RCC_GPIOG_CLK_ENABLE() )
 
+#define AFIO_REMAP_PARTIAL(REMAP_PIN, REMAP_PIN_MASK) do{ uint32_t tmpreg = AFIO->MAPR; \
+                                                          tmpreg &= ~REMAP_PIN_MASK;    \
+                                                          tmpreg |= AFIO_MAPR_SWJ_CFG;  \
+                                                          tmpreg |= REMAP_PIN;          \
+                                                          AFIO->MAPR = tmpreg;          \
+                                                          }while(0u)
+
+#define AFIO_REMAP_TIM3_ENABLE()  AFIO_REMAP_PARTIAL(AFIO_MAPR_TIM3_REMAP_FULLREMAP, AFIO_MAPR_TIM3_REMAP_FULLREMAP)
+
 
 /**************************************************************************************************************
  * 																											  *

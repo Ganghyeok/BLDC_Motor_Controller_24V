@@ -301,7 +301,41 @@ void TIM1_Init(TIM_HandleTypeDef *pTIMHandle)
 }
 
 
+void TIM3_Init(TIM_HandleTypeDef *pTIMHandle)
+{
+	pTIMHandle->Instance = TIM3;
+	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
+	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	pTIMHandle->Init.Prescaler = (720-1);	//   72MHz / 720 = 100kHz
+	pTIMHandle->Init.Period = (10-1);		//   100kHz / 10 = 10kHz
+	TIM_PWM_Init(pTIMHandle);
+
+	TIM_OC_InitTypeDef TIM1_PWMConfig;
+
+	memset(&TIM1_PWMConfig, 0, sizeof(TIM1_PWMConfig));
+
+	TIM1_PWMConfig.OCMode = TIM_OCMODE_PWM1;
+	TIM1_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+
+	TIM1_PWMConfig.Pulse = 2;	// (2/10)*100 = 20% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_1);
+
+	TIM1_PWMConfig.Pulse = 4;	// (4/10)*100 = 40% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_2);
+
+	TIM1_PWMConfig.Pulse = 6;	// (6/10)*100 = 60% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_3);
+
+	TIM1_PWMConfig.Pulse = 8;	// (8/10)*100 = 80% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_4);
+}
+
+
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
-	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+	if(pTIMHandle->Instance == TIM6)
+	{
+		GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+	}
+
 }
