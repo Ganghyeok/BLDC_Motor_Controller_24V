@@ -32,19 +32,43 @@ void USART_MspInit(USART_TypeDef *USARTx)
 
 		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
 	}
+	else if(USARTx == USART2)
+	{
+		// USART2 Tx
+		GPIOHandle.Instance = GPIOA;
+		GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
+		GPIOHandle.Init.Pin = GPIO_PIN_2;
+		GPIOHandle.Init.Pull = GPIO_PULLUP;
+		GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_HIGH;
+
+		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
+
+		// USART2 Rx
+		GPIOHandle.Init.Mode = GPIO_MODE_INPUT;
+		GPIOHandle.Init.Pin = GPIO_PIN_3;
+
+		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
+	}
 
 	// 2. Configure CLOCK for USART
 	USART_PeripheralClockControl(USARTx, ENABLE);
 }
 
 
-
 void TIM_Base_MspInit(TIM_TypeDef *TIMx)
 {
-	// 1. Configure GPIO for TIM
+	if(TIMx == TIM6)
+	{
+		// 1. Configure GPIO for TIM
+		// TIM6 is used for just time base generation so that GPIO config is not needed
 
-	// 2. Configure CLOCK for TIM
-	TIM_PeripheralClockControl(TIMx, ENABLE);
+		// 2. Configure CLOCK for TIM
+		TIM_PeripheralClockControl(TIMx, ENABLE);
+
+		// 3. Configure NVIC for TIM
+		NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
+	}
+
 }
 
 
@@ -58,7 +82,7 @@ void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle)
 		memset(&TIMx_GPIOHandle, 0, sizeof(TIMx_GPIOHandle));
 
 		TIMx_GPIOHandle.Instance = GPIOA;
-		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11;
+		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
 		TIMx_GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
 		TIMx_GPIOHandle.Init.Pull = GPIO_NOPULL;
 		TIMx_GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_MEDIUM;

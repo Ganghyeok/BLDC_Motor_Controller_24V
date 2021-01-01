@@ -18,3 +18,17 @@ void TIM6_IRQHandler(void)
 {
 	TIM_IRQHandling(&TIM6Handle);
 }
+
+
+void EXTI9_5_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8);
+}
+
+
+void EXTI0_IRQHandler(void)
+{
+	EXTI->PR |= GPIO_PIN_0;
+
+	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+}

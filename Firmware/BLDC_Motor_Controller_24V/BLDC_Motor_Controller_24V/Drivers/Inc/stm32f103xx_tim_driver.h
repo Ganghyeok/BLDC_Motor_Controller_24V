@@ -183,27 +183,31 @@ typedef struct
 #define TIM_IT_BREAK                       TIM_DIER_BIE                         /*!< Break interrupt             */
 
 
+/** @defgroup TIM_Private_Constants TIM Private Constants
+  * @{
+  */
+/* The counter of a timer instance is disabled only if all the CCx and CCxN
+   channels have been disabled */
+#define TIM_CCER_CCxE_MASK  ((uint32_t)(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E))
+#define TIM_CCER_CCxNE_MASK ((uint32_t)(TIM_CCER_CC1NE | TIM_CCER_CC2NE | TIM_CCER_CC3NE))
+
+
 /**************************************************************************************************************
  * 																											  *
  * 												User Macro Definition										  *
  * 									  																		  *
  **************************************************************************************************************/
-#define TIM_ENABLE_COUNTER(__HANDLE__)                 ((__HANDLE__)->Instance->CR1|=(TIM_CR1_CEN))
+#define TIM_ENABLE_COUNTER(HANDLE)					((HANDLE)->Instance->CR1 |= (TIM_CR1_CEN))
 
-#define TIM_DISABLE_COUNTER(__HANDLE__) \
-  do { \
-    if (((__HANDLE__)->Instance->CCER & TIM_CCER_CCxE_MASK) == 0UL) \
-    { \
-      if(((__HANDLE__)->Instance->CCER & TIM_CCER_CCxNE_MASK) == 0UL) \
-      { \
-        (__HANDLE__)->Instance->CR1 &= ~(TIM_CR1_CEN); \
-      } \
-    } \
-  } while(0)
+#define TIM_DISABLE_COUNTER(HANDLE)					((HANDLE)->Instance->CR1 &= ~(TIM_CR1_CEN))
 
-#define TIM_ENABLE_IT(__HANDLE__, __INTERRUPT__)    ((__HANDLE__)->Instance->DIER |= (__INTERRUPT__))
+#define TIM_ENABLE_CHANNEL(HANDLE, CHANNEL)				((HANDLE)->Instance->CCER |= (1 << CHANNEL))
 
-#define TIM_DISABLE_IT(__HANDLE__, __INTERRUPT__)   ((__HANDLE__)->Instance->DIER &= ~(__INTERRUPT__))
+#define TIM_DISABLE_CHANNEL(HANDLE, CHANNEL)			((HANDLE)->Instance->CCER &= ~(1 << CHANNEL))
+
+#define TIM_ENABLE_IT(HANDLE, INTERRUPT)    ((HANDLE)->Instance->DIER |= (INTERRUPT))
+
+#define TIM_DISABLE_IT(HANDLE, INTERRUPT)   ((HANDLE)->Instance->DIER &= ~(INTERRUPT))
 
 #define TIM_SET_COMPARE(HANDLE, CHANNEL, COMPARE) \
   (((CHANNEL) == TIM_CHANNEL_1) ? ((HANDLE)->Instance->CCR1 = (COMPARE)) :\

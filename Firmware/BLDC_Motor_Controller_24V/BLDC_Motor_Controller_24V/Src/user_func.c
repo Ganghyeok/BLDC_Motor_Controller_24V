@@ -214,28 +214,35 @@ void Delay_ms(uint32_t time_ms)
 }
 
 
-void GPIOTest_Init(void)
+void GPIO_BLDC_Init(void)
 {
-	GPIO_InitTypeDef GPIO_Test;
+	GPIO_InitTypeDef GPIOInit;
 
-	memset(&GPIO_Test, 0, sizeof(GPIO_Test));
-	GPIO_Test.Mode = GPIO_MODE_INPUT;
-	GPIO_Test.Pin = GPIO_PIN_0;
-	GPIO_Test.Pull = GPIO_PULLUP;
-	GPIO_Init(GPIOA, &GPIO_Test);
+	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
-	memset(&GPIO_Test, 0, sizeof(GPIO_Test));
-	GPIO_Test.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_Test.Pin = GPIO_PIN_1;
-	GPIO_Test.Pull = GPIO_NOPULL;
-	GPIO_Test.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(GPIOA, &GPIO_Test);
+	// 1. Initialize GPIO for UT, VT, WT to GPIO Output mode
+	GPIOInit.Pin = GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+	GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIOInit.Pull = GPIO_NOPULL;
+	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
+	GPIO_Init(GPIOB, &GPIOInit);
+
+	memset(&GPIOInit, 0, sizeof(GPIOInit));
+
+	// 2. Initialize GPIO for UB, VB, WB to GPIO Output mode
+	GPIOInit.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
+	GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIOInit.Pull = GPIO_NOPULL;
+	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
+	GPIO_Init(GPIOA, &GPIOInit);
+
+	memset(&GPIOInit, 0, sizeof(GPIOInit));
 }
 
 
-void UART1_Init(UART_HandleTypeDef *pUARTHandle)
+void UART2_Init(UART_HandleTypeDef *pUARTHandle)
 {
-	pUARTHandle->Instance = USART1;
+	pUARTHandle->Instance = USART2;
 	pUARTHandle->Init.Mode = UART_MODE_TX;
 	pUARTHandle->Init.OverSampling = UART_OVERSAMPLING_16;
 	pUARTHandle->Init.BaudRate = USART_STD_BAUD_115200;
@@ -256,12 +263,9 @@ void TIM6_Init(TIM_HandleTypeDef *pTIMHandle)
 	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	pTIMHandle->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	pTIMHandle->Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
-	pTIMHandle->Init.Period = (2000-1);	// 10kHz / 2000 = 5Hz
+	pTIMHandle->Init.Period = (10-1);	// 10kHz / 10 = 1kHz
 	pTIMHandle->Init.RepetitionCounter = 0;
 	TIM_Base_Init(pTIMHandle);
-
-	// Configure the NVIC IRQ for TIM6
-	NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
 
 	// Enable TIM6 interrupt for Update Event
 	TIM_ENABLE_IT(&TIM6Handle, TIM_IT_UPDATE);
@@ -276,8 +280,8 @@ void TIM1_Init(TIM_HandleTypeDef *pTIMHandle)
 	pTIMHandle->Instance = TIM1;
 	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
 	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	pTIMHandle->Init.Prescaler = (720-1);	//   72MHz / 720 = 100kHz
-	pTIMHandle->Init.Period = (10-1);		//   100kHz / 10 = 10kHz
+	pTIMHandle->Init.Prescaler = (36-1);	//   72MHz / 36 = 2MHz
+	pTIMHandle->Init.Period = (100-1);		//   2MHz / 100 = 10kHz
 	TIM_PWM_Init(pTIMHandle);
 
 	TIM_OC_InitTypeDef TIM1_PWMConfig;
@@ -287,17 +291,14 @@ void TIM1_Init(TIM_HandleTypeDef *pTIMHandle)
 	TIM1_PWMConfig.OCMode = TIM_OCMODE_PWM1;
 	TIM1_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
 
-	TIM1_PWMConfig.Pulse = 2;	// (2/10)*100 = 20% duty
+	TIM1_PWMConfig.Pulse = 0;	// Initially, 0% duty
 	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_1);
 
-	TIM1_PWMConfig.Pulse = 4;	// (4/10)*100 = 40% duty
+	TIM1_PWMConfig.Pulse = 0;	// Initially, 0% duty
 	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_2);
 
-	TIM1_PWMConfig.Pulse = 6;	// (6/10)*100 = 60% duty
+	TIM1_PWMConfig.Pulse = 0;	// Initially, 0% duty
 	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_3);
-
-	TIM1_PWMConfig.Pulse = 8;	// (8/10)*100 = 80% duty
-	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_4);
 }
 
 
@@ -337,5 +338,74 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 	{
 		GPIO_TogglePin(GPIOA, GPIO_PIN_1);
 	}
+}
 
+
+void EXTI_Init(GPIO_HandleTypeDef *GPIOHandle)
+{
+	GPIOHandle->Instance = GPIOC;
+	GPIOHandle->Init.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
+	GPIOHandle->Init.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIOHandle->Init.Pull = GPIO_NOPULL;
+	GPIO_Init(GPIOHandle->Instance, &GPIOHandle->Init);
+
+//	GPIOHandle->Instance = GPIOA;
+//	GPIOHandle->Init.Pin = GPIO_PIN_0;
+//	GPIOHandle->Init.Mode = GPIO_MODE_IT_RISING_FALLING;
+//	GPIOHandle->Init.Pull = GPIO_PULLUP;
+//	GPIO_Init(GPIOHandle->Instance, &GPIOHandle->Init);
+
+	NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE);
+}
+
+
+void EXTI_Callback(uint32_t GPIO_Pin)
+{
+	UNUSED(GPIO_Pin);
+
+	uint32_t HallPhase;
+
+	HallPhase = (READ_BIT(GPIOC->IDR, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8)) >> 6U;
+
+	switch (HallPhase)
+	{
+		case Phase1:
+		{
+			BLDC_Step2();
+			break;
+		}
+
+		case Phase2:
+		{
+			BLDC_Step1();
+			break;
+		}
+
+		case Phase3:
+		{
+			BLDC_Step6();
+			break;
+		}
+
+		case Phase4:
+		{
+			BLDC_Step5();
+			break;
+		}
+
+		case Phase5:
+		{
+			BLDC_Step4();
+			break;
+		}
+
+		case Phase6:
+		{
+			BLDC_Step3();
+			break;
+		}
+
+		default :
+			break;
+	}
 }

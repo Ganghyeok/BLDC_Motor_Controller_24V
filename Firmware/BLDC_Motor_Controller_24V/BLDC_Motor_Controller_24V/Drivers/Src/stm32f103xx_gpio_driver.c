@@ -130,7 +130,7 @@ void GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
 				exti_sel = position / 4;
 				exti_pos = position % 4;
 
-				MODIFY_REG(AFIO->EXTICR[exti_sel], (0xF << exti_pos), (GET_GPIOCODE(GPIOx) << exti_pos));
+				MODIFY_REG(AFIO->EXTICR[exti_sel], (0xF << (4 * exti_pos)), (GET_GPIOCODE(GPIOx) << (4 * exti_pos)));
 
 				/* Configure the interrupt mask */
 				if( (GPIO_Init->Mode & GPIO_MODE_IT) == GPIO_MODE_IT )
@@ -198,7 +198,6 @@ uint8_t GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 }
 
 
-
 void GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState)
 {
 	if(PinState == GPIO_PIN_SET)
@@ -211,6 +210,21 @@ void GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState)
 	}
 }
 
+
+void GPIO_ModifyPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_To_Set, uint16_t GPIO_Pin_To_Reset)
+{
+	uint32_t config = 0;
+
+	config = ((uint32_t)GPIO_Pin_To_Reset << 16U) | GPIO_Pin_To_Set;
+
+	GPIOx->BSRR |= config;
+}
+
+
+void GPIO_WritePort(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState)
+{
+	GPIOx->BSRR = (((0xFFFFU & ~(GPIO_Pin)) << 16U) | (GPIO_Pin));
+}
 
 
 void GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
@@ -226,3 +240,31 @@ void GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 		GPIOx->BSRR |= GPIO_Pin;
 	}
 }
+
+
+void EXTI_IRQHandling(uint32_t GPIO_Pin)
+{
+	/* Interrupt handling for EXTI */
+	uint32_t extiSrcPin;
+
+	extiSrcPin = EXTI->PR & GPIO_Pin;
+
+	if(extiSrcPin != 0)
+	{
+		EXTI->PR |= extiSrcPin;		// Clear the pending event from EXTI line
+		EXTI_Callback(extiSrcPin);		// Call EXTI_Callback function
+	}
+}
+
+
+__weak void EXTI_Callback(uint32_t GPIO_Pin)
+{
+	/* Prevent unused argument(s) compilation warning */
+		UNUSED(GPIO_Pin);
+
+	/* NOTE : This function should not be modified, when the callback is needed,
+	 * 		  the EXTI_Callback could be implemented in the user file
+	 * 		  (This is a weak implementation. The user application may override this function)
+	 */
+}
+

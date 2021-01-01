@@ -2,6 +2,7 @@
 "Drivers/Src/stm32f103xx_rcc_driver.o"
 "Drivers/Src/stm32f103xx_tim_driver.o"
 "Drivers/Src/stm32f103xx_usart_driver.o"
+"Src/bldc.o"
 "Src/it.o"
 "Src/main.o"
 "Src/msp.o"

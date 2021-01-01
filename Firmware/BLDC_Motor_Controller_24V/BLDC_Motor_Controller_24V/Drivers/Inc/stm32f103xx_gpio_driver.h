@@ -177,8 +177,11 @@ void GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin);
 /* IO operation functions *****************************************************/
 uint8_t GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState);
+void GPIO_ModifyPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_To_Set, uint16_t GPIO_Pin_To_Reset);
+void GPIO_WritePort(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState);
 void GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
-
+void EXTI_IRQHandling(uint32_t GPIO_Pin);
+void EXTI_Callback(uint32_t GPIO_Pin);
 
 
 #endif /* INC_STM32F103XX_GPIO_DRIVER_H_ */
