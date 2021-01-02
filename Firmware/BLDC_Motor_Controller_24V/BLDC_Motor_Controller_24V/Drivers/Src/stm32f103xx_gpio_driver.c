@@ -215,7 +215,7 @@ void GPIO_ModifyPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_To_Set, uint16_t GPIO
 {
 	uint32_t config = 0;
 
-	config = ((uint32_t)GPIO_Pin_To_Reset << 16U) | GPIO_Pin_To_Set;
+	config = ((uint32_t)GPIO_Pin_To_Reset << 16U) | (GPIO_Pin_To_Set);
 
 	GPIOx->BSRR |= config;
 }

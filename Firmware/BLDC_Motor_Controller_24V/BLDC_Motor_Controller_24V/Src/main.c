@@ -30,10 +30,10 @@ void GPIO_TestInit(void);
 
 int main(void)
 {
-	Delay_ms(1000);
-
 	// 1. System Clock configuration to 72MHz
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);
+
+	Delay_ms(3000);
 
 	// 2. Clear All members of Handle structures to 0
 	memset(&TIM6Handle, 0, sizeof(TIM6Handle));
@@ -41,13 +41,13 @@ int main(void)
 	memset(&EXTIHandle, 0, sizeof(EXTIHandle));
 
 	// 3. Initialize peripherals
-	GPIO_BLDC_Init();			// GPIO init for U/V/W
-	EXTI_Init(&EXTIHandle);		// EXTI init for Interrupt triggered by Hallphase change
 	TIM6_Init(&TIM6Handle);		// TIM6 init for 1ms period of time base
-	TIM1_Init(&TIM1Handle);		// TIM1 init for PWM generation to drive BLDC motor
 
-	// 4. Charge Bootstrap Capacitor
-	BLDC_BootstrapCap_Charge();
+	EXTI_Init(&EXTIHandle);		// EXTI init for Interrupt triggered by Hallphase change
+
+	GPIO_BLDC_Init();			// GPIO init for U/V/W and Charge Bootstrap Cap
+
+	TIM1_Init(&TIM1Handle);		// TIM1 init for PWM generation to drive BLDC motor
 
 	// 5. Start PWM for UB, VB, WB
 	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_1);			// Start PWM for UB
@@ -59,14 +59,13 @@ int main(void)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
 
-	// 7. Set PWM duty to 10%
+	// 7. Set PWM duty to 80%
 	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_1, 80);	// 80% duty
 	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_2, 80);	// 80% duty
 	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_3, 80);	// 80% duty
 
 	Delay_ms(1000);
 
-	GPIO_TestInit();
 
 	while(1)
 	{

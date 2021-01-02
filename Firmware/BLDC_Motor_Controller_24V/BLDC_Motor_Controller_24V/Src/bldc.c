@@ -57,7 +57,7 @@ void BLDC_BootstrapCap_Charge(void)
 void BLDC_Step1(void)
 {
 	// 1. UT Logic On (PB13)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, GPIO_PIN_14 | GPIO_PIN_15);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, (GPIO_PIN_14 | GPIO_PIN_15));
 
 	// 2. VB PWM On (PA9)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
@@ -68,7 +68,7 @@ void BLDC_Step1(void)
 void BLDC_Step2(void)
 {
 	// 1. WT Logic On (PB15)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, GPIO_PIN_13 | GPIO_PIN_14);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, (GPIO_PIN_13 | GPIO_PIN_14));
 
 	// 2. VB PWM On (PA9)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
@@ -79,7 +79,7 @@ void BLDC_Step2(void)
 void BLDC_Step3(void)
 {
 	// 1. WT Logic On (PB15)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, GPIO_PIN_13 | GPIO_PIN_14);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, (GPIO_PIN_13 | GPIO_PIN_14));
 
 	// 2. UB PWM On (PA8)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
@@ -90,7 +90,7 @@ void BLDC_Step3(void)
 void BLDC_Step4(void)
 {
 	// 1. VT Logic On (PB14)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, GPIO_PIN_13 | GPIO_PIN_15);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, (GPIO_PIN_13 | GPIO_PIN_15));
 
 	// 2. UB PWM On (PA8)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
@@ -101,7 +101,7 @@ void BLDC_Step4(void)
 void BLDC_Step5(void)
 {
 	// 1. VT Logic On (PB14)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, GPIO_PIN_13 | GPIO_PIN_15);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, (GPIO_PIN_13 | GPIO_PIN_15));
 
 	// 2. WB PWM On (PA10)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
@@ -112,7 +112,7 @@ void BLDC_Step5(void)
 void BLDC_Step6(void)
 {
 	// 1. UT Logic On (PB13)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, GPIO_PIN_14 | GPIO_PIN_15);
+	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, (GPIO_PIN_14 | GPIO_PIN_15));
 
 	// 2. WB PWM On (PA10)
 	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);

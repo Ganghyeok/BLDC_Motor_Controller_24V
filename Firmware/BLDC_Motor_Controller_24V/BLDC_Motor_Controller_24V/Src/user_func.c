@@ -227,7 +227,7 @@ void GPIO_BLDC_Init(void)
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	GPIO_Init(GPIOB, &GPIOInit);
 
-	memset(&GPIOInit, 0, sizeof(GPIOInit));
+	GPIO_WritePin(GPIOB, (GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15), GPIO_PIN_RESET);
 
 	// 2. Initialize GPIO for UB, VB, WB to GPIO Output mode
 	GPIOInit.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
@@ -236,7 +236,13 @@ void GPIO_BLDC_Init(void)
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	GPIO_Init(GPIOA, &GPIOInit);
 
-	memset(&GPIOInit, 0, sizeof(GPIOInit));
+	GPIO_WritePin(GPIOA, (GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10), GPIO_PIN_RESET);
+
+	// 3. Charge Bootstrap Capacitor for 10ms
+	Delay_ms(10);
+	GPIO_WritePin(GPIOA, (GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10), GPIO_PIN_SET);
+	Delay_ms(10);
+	GPIO_WritePin(GPIOA, (GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10), GPIO_PIN_RESET);
 }
 
 
@@ -281,7 +287,7 @@ void TIM1_Init(TIM_HandleTypeDef *pTIMHandle)
 	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
 	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	pTIMHandle->Init.Prescaler = (36-1);	//   72MHz / 36 = 2MHz
-	pTIMHandle->Init.Period = (100-1);		//   2MHz / 100 = 10kHz
+	pTIMHandle->Init.Period = (100-1);		//   2MHz / 100 = 20kHz
 	TIM_PWM_Init(pTIMHandle);
 
 	TIM_OC_InitTypeDef TIM1_PWMConfig;
@@ -307,28 +313,28 @@ void TIM3_Init(TIM_HandleTypeDef *pTIMHandle)
 	pTIMHandle->Instance = TIM3;
 	pTIMHandle->Init.CounterMode = TIM_COUNTERMODE_UP;
 	pTIMHandle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	pTIMHandle->Init.Prescaler = (720-1);	//   72MHz / 720 = 100kHz
-	pTIMHandle->Init.Period = (10-1);		//   100kHz / 10 = 10kHz
+	pTIMHandle->Init.Prescaler = (36-1);	//   72MHz / 36 = 2MHz
+	pTIMHandle->Init.Period = (100-1);		//   2MHz / 100 = 20kHz
 	TIM_PWM_Init(pTIMHandle);
 
-	TIM_OC_InitTypeDef TIM1_PWMConfig;
+	TIM_OC_InitTypeDef TIM3_PWMConfig;
 
-	memset(&TIM1_PWMConfig, 0, sizeof(TIM1_PWMConfig));
+	memset(&TIM3_PWMConfig, 0, sizeof(TIM3_PWMConfig));
 
-	TIM1_PWMConfig.OCMode = TIM_OCMODE_PWM1;
-	TIM1_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	TIM3_PWMConfig.OCMode = TIM_OCMODE_PWM1;
+	TIM3_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
 
-	TIM1_PWMConfig.Pulse = 2;	// (2/10)*100 = 20% duty
-	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_1);
+	TIM3_PWMConfig.Pulse = 2;	// (2/10)*100 = 20% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM3_PWMConfig, TIM_CHANNEL_1);
 
-	TIM1_PWMConfig.Pulse = 4;	// (4/10)*100 = 40% duty
-	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_2);
+	TIM3_PWMConfig.Pulse = 4;	// (4/10)*100 = 40% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM3_PWMConfig, TIM_CHANNEL_2);
 
-	TIM1_PWMConfig.Pulse = 6;	// (6/10)*100 = 60% duty
-	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_3);
+	TIM3_PWMConfig.Pulse = 6;	// (6/10)*100 = 60% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM3_PWMConfig, TIM_CHANNEL_3);
 
-	TIM1_PWMConfig.Pulse = 8;	// (8/10)*100 = 80% duty
-	TIM_PWM_ConfigChannel(pTIMHandle, &TIM1_PWMConfig, TIM_CHANNEL_4);
+	TIM3_PWMConfig.Pulse = 8;	// (8/10)*100 = 80% duty
+	TIM_PWM_ConfigChannel(pTIMHandle, &TIM3_PWMConfig, TIM_CHANNEL_4);
 }
 
 
@@ -348,12 +354,6 @@ void EXTI_Init(GPIO_HandleTypeDef *GPIOHandle)
 	GPIOHandle->Init.Mode = GPIO_MODE_IT_RISING_FALLING;
 	GPIOHandle->Init.Pull = GPIO_NOPULL;
 	GPIO_Init(GPIOHandle->Instance, &GPIOHandle->Init);
-
-//	GPIOHandle->Instance = GPIOA;
-//	GPIOHandle->Init.Pin = GPIO_PIN_0;
-//	GPIOHandle->Init.Mode = GPIO_MODE_IT_RISING_FALLING;
-//	GPIOHandle->Init.Pull = GPIO_PULLUP;
-//	GPIO_Init(GPIOHandle->Instance, &GPIOHandle->Init);
 
 	NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE);
 }
