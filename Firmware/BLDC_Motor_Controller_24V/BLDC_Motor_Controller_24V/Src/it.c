@@ -22,7 +22,7 @@ void TIM6_IRQHandler(void)
 
 void EXTI9_5_IRQHandler(void)
 {
-	EXTI_IRQHandling(GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8);
+	EXTI_IRQHandling(BLDCHandle.GPIO_List.GPIO_Pins_Hall);
 }
 
 

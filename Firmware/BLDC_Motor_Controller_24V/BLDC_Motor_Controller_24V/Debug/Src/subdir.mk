@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Src/bldc.c \
+../Src/common.c \
 ../Src/it.c \
 ../Src/main.c \
 ../Src/msp.c \
@@ -14,6 +15,7 @@ C_SRCS += \
 
 OBJS += \
 ./Src/bldc.o \
+./Src/common.o \
 ./Src/it.o \
 ./Src/main.o \
 ./Src/msp.o \
@@ -23,6 +25,7 @@ OBJS += \
 
 C_DEPS += \
 ./Src/bldc.d \
+./Src/common.d \
 ./Src/it.d \
 ./Src/main.d \
 ./Src/msp.d \
@@ -34,6 +37,8 @@ C_DEPS += \
 # Each subdirectory must supply rules for building sources it contributes
 Src/bldc.o: ../Src/bldc.c
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DSTM32F103RCTx -DSTM32 -DSTM32F1 -DDEBUG -c -I../Inc -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Src" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Inc" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Src" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/bldc.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
+Src/common.o: ../Src/common.c
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DSTM32F103RCTx -DSTM32 -DSTM32F1 -DDEBUG -c -I../Inc -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Src" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Inc" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Src" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/common.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Src/it.o: ../Src/it.c
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DSTM32F103RCTx -DSTM32 -DSTM32F1 -DDEBUG -c -I../Inc -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Src" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Inc" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Src" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/it.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Src/main.o: ../Src/main.c

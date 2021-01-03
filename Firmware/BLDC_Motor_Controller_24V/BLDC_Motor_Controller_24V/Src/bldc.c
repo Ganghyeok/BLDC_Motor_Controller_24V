@@ -6,118 +6,172 @@
  */
 
 
-#include "main.h"
+#include "bldc.h"
 
+
+uint8_t DutyRef = 0;
 
 /****************************************************************************************/
 /*																						*/
-/*									BLDC Motor APIs										*/
+/*									BLDC Motor functions								*/
 /*																						*/
 /****************************************************************************************/
-void BLDC_BootstrapCap_Charge(void)
+
+void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle, uint16_t hallPhase)
 {
-/* Disable All PWM channels */
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
+	switch (hallPhase)
+	{
+		case Phase1:
+		{
+			BLDC_Step2(pBLDCHandle);
+			break;
+		}
 
-/* Re-initialize GPIO pins from TIM PWM channels to GPIO Output mode */
+		case Phase2:
+		{
+			BLDC_Step1(pBLDCHandle);
+			break;
+		}
 
+		case Phase3:
+		{
+			BLDC_Step6(pBLDCHandle);
+			break;
+		}
+
+		case Phase4:
+		{
+			BLDC_Step5(pBLDCHandle);
+			break;
+		}
+
+		case Phase5:
+		{
+			BLDC_Step4(pBLDCHandle);
+			break;
+		}
+
+		case Phase6:
+		{
+			BLDC_Step3(pBLDCHandle);
+			break;
+		}
+
+		default :
+			break;
+	}
+}
+
+
+void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
+{
+	// 1. Clear GPIO pin of Top side(UT, VT, WT) and Disable All PWM channels
+	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Top, pBLDCHandle->GPIO_List.GPIO_Pins_Top, GPIO_PIN_RESET);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	Delay_ms(10);
+
+	// 2. Re-initialize GPIO pins from TIM PWM channels to GPIO Output mode
 	GPIO_InitTypeDef GPIOInit;
+
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
-	// 1. Re-initialize GPIO pins to GPIO Output mode
-	GPIOInit.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
+	// 3. Re-initialize GPIO pins to GPIO Output mode
+	GPIOInit.Pin = pBLDCHandle->GPIO_List.GPIO_Pins_Bottom;
 	GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(GPIOA, &GPIOInit);
+	GPIO_Init(pBLDCHandle->GPIO_List.GPIOx_Bottom, &GPIOInit);
+	Delay_ms(10);
 
-/* Charge Bootstrap Capacitor for 1ms */
-	GPIO_WritePin(GPIOB, (GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15), GPIO_PIN_RESET);
-	GPIO_WritePin(GPIOA, (GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10), GPIO_PIN_SET);
-	Delay_ms(1);
-	GPIO_WritePin(GPIOA, (GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10), GPIO_PIN_RESET);
+	// 4. Charge Bootstrap Capacitor for 10ms
+	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Bottom, pBLDCHandle->GPIO_List.GPIO_Pins_Bottom, GPIO_PIN_SET);
+	Delay_ms(10);
+	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Bottom, pBLDCHandle->GPIO_List.GPIO_Pins_Bottom, GPIO_PIN_RESET);
 
-/* Re-initialize GPIO pins from GPIO Output mode to TIM PWM channels */
+	// 5. Re-initialize GPIO pins from GPIO Output mode to TIM PWM channels
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
-	GPIOInit.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
+
+	GPIOInit.Pin = pBLDCHandle->GPIO_List.GPIO_Pins_Bottom;
 	GPIOInit.Mode = GPIO_MODE_AF_PP;
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(GPIOA, &GPIOInit);
+	GPIO_Init(pBLDCHandle->GPIO_List.GPIOx_Bottom, &GPIOInit);
+	Delay_ms(10);
 
-/* Enable All PWM channels */
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
+	// 6. Enable All PWM channels
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	Delay_ms(10);
 }
 
 
-void BLDC_Step1(void)
+void BLDC_Step1(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. UT Logic On (PB13)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, (GPIO_PIN_14 | GPIO_PIN_15));
+	// 1. UT Logic On (PB0)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_UT, (pBLDCHandle->GPIO_List.GPIO_Pin_VT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
 
-	// 2. VB PWM On (PA9)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
+	// 2. VB PWM On (PB7)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
 }
 
-void BLDC_Step2(void)
+void BLDC_Step2(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. WT Logic On (PB15)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, (GPIO_PIN_13 | GPIO_PIN_14));
+	// 1. WT Logic On (PB2)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_WT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_VT));
 
-	// 2. VB PWM On (PA9)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
+	// 2. VB PWM On (PB7)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
 }
 
-void BLDC_Step3(void)
+void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. WT Logic On (PB15)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_15, (GPIO_PIN_13 | GPIO_PIN_14));
+	// 1. WT Logic On (PB2)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_WT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_VT));
 
-	// 2. UB PWM On (PA8)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
+	// 2. UB PWM On (PB6)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
 }
 
-void BLDC_Step4(void)
+void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. VT Logic On (PB14)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, (GPIO_PIN_13 | GPIO_PIN_15));
+	// 1. VT Logic On (PB1)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_VT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
 
-	// 2. UB PWM On (PA8)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
+	// 2. UB PWM On (PB6)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
 }
 
-void BLDC_Step5(void)
+void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. VT Logic On (PB14)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_14, (GPIO_PIN_13 | GPIO_PIN_15));
+	// 1. VT Logic On (PB1)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_VT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
 
-	// 2. WB PWM On (PA10)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
+	// 2. WB PWM On (PB8)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
 }
 
-void BLDC_Step6(void)
+void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	// 1. UT Logic On (PB13)
-	GPIO_ModifyPin(GPIOB, GPIO_PIN_13, (GPIO_PIN_14 | GPIO_PIN_15));
+	// 1. UT Logic On (PB0)
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_UT, (pBLDCHandle->GPIO_List.GPIO_Pin_VT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
 
-	// 2. WB PWM On (PA10)
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
+	// 2. WB PWM On (PB8)
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
 }
 
 /****************************************************************************************/
@@ -150,11 +204,11 @@ void IR2101_Test2(uint16_t Top_time_ms, uint16_t Low_time_ms, uint16_t Dead_time
 	Delay_ms(Dead_time_ms);
 }
 
-void IR2101_Test3(uint16_t Top_time_us, uint16_t Low_time_us, uint16_t Dead_time_us)
+void IR2101_Test3(TIM_HandleTypeDef *pTIMHandle, uint16_t Top_time_us, uint16_t Low_time_us, uint16_t Dead_time_us)
 {
-	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_1, 50);
+	TIM_SET_COMPARE(pTIMHandle, TIM_CHANNEL_1, 50);
 	Delay_us(Low_time_us);
-	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_1, 0);
+	TIM_SET_COMPARE(pTIMHandle, TIM_CHANNEL_1, 0);
 	Delay_us(Dead_time_us);
 	GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
 	Delay_us(Top_time_us);

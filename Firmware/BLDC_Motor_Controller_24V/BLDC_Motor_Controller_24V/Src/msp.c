@@ -94,7 +94,19 @@ void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle)
 		memset(&TIMx_GPIOHandle, 0, sizeof(TIMx_GPIOHandle));
 
 		TIMx_GPIOHandle.Instance = GPIOC;
-		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
+		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
+		TIMx_GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
+		TIMx_GPIOHandle.Init.Pull = GPIO_NOPULL;
+		TIMx_GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+		GPIO_Init(TIMx_GPIOHandle.Instance, &TIMx_GPIOHandle.Init);
+	}
+
+	if(pTIMHandle->Instance == TIM4)
+	{
+		memset(&TIMx_GPIOHandle, 0, sizeof(TIMx_GPIOHandle));
+
+		TIMx_GPIOHandle.Instance = GPIOB;
+		TIMx_GPIOHandle.Init.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
 		TIMx_GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
 		TIMx_GPIOHandle.Init.Pull = GPIO_NOPULL;
 		TIMx_GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_MEDIUM;

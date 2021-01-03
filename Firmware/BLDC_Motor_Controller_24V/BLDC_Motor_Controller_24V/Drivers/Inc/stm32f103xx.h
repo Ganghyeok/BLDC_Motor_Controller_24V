@@ -37,6 +37,8 @@
 #define GPIO_PIN_RESET							RESET
 #define FLAG_SET								SET
 #define FLAG_RESET								RESET
+#define BUTTON_PRESSED							GPIO_PIN_RESET
+#define BUTTON_NOT_PRESSED						GPIO_PIN_SET
 #define UNUSED(X)								(void)X			/* To avoid gcc/g++ warnings */
 
 

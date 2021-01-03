@@ -20,14 +20,6 @@
 #include "main.h"
 
 
-TIM_HandleTypeDef TIM6Handle;
-TIM_HandleTypeDef TIM1Handle;
-GPIO_HandleTypeDef EXTIHandle;
-
-
-void GPIO_TestInit(void);
-
-
 int main(void)
 {
 	// 1. System Clock configuration to 72MHz
@@ -36,53 +28,82 @@ int main(void)
 	Delay_ms(3000);
 
 	// 2. Clear All members of Handle structures to 0
-	memset(&TIM6Handle, 0, sizeof(TIM6Handle));
-	memset(&TIM1Handle, 0, sizeof(TIM1Handle));
-	memset(&EXTIHandle, 0, sizeof(EXTIHandle));
+	MemsetHandleStructure();
 
 	// 3. Initialize peripherals
-	TIM6_Init(&TIM6Handle);		// TIM6 init for 1ms period of time base
+	Button_Init();				// Initialize peripherals related to Button
+	BLDC_Init(&BLDCHandle);		// Initialize peripherals related to BLDC motor
+	TIM6_Init(&TIM6Handle);		// Initialize TIM6 to generate interrupt of 1ms period
+	Delay_ms(10);
 
-	EXTI_Init(&EXTIHandle);		// EXTI init for Interrupt triggered by Hallphase change
+	// 4. Start PWM for UB, VB, WB
+	StartTimerPwm(&BLDCHandle);
+	Delay_ms(10);
 
-	GPIO_BLDC_Init();			// GPIO init for U/V/W and Charge Bootstrap Cap
+	// 5. Disable All PWM channels
+	DisableTimerPwmChannel(&BLDCHandle);
+	Delay_ms(10);
 
-	TIM1_Init(&TIM1Handle);		// TIM1 init for PWM generation to drive BLDC motor
-
-	// 5. Start PWM for UB, VB, WB
-	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_1);			// Start PWM for UB
-	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_2);			// Start PWM for VB
-	TIM_PWM_Start(&TIM1Handle, TIM_CHANNEL_3);			// Start PWM for WB
-
-	// 6. Disable All PWM channels
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(&TIM1Handle, TIM_CHANNEL_3);
-
-	// 7. Set PWM duty to 80%
-	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_1, 80);	// 80% duty
-	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_2, 80);	// 80% duty
-	TIM_SET_COMPARE(&TIM1Handle, TIM_CHANNEL_3, 80);	// 80% duty
-
-	Delay_ms(1000);
+	// 6. Set Desired PWM duty to 80%
+	BLDC_SET_REF_DUTY(80);
 
 
 	while(1)
 	{
+		// 1. Check the START/STOP Button is pressed
+		if(ButtonFlag == FLAG_SET)
+		{
+			if(MotorState == STOP)
+			{
+				// 1. Change MotorState from STOP to START
+				MotorState = START;
 
+				// 2. Enable EXTI of Hall sensor
+				ENABLE_HALLSENSOR_EXTI();
+
+				// 3. Drive motor to trigger EXTI
+				SetPwmDuty(&BLDCHandle, 10);
+
+				// 4. Charge Bootstrap Capacitor for 10ms before Drive BLDC motor
+				BLDC_BootstrapCap_Charge(&BLDCHandle);
+
+				// 5. Detect current HallPhase location
+				HallPhase = (READ_BIT(GPIOC->IDR, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8)) >> 6U;
+
+				// 6. Drive BLDC motor according to HallPhase location
+				BLDC_Drive(&BLDCHandle, HallPhase);
+
+				// 7. Increase PWM duty cycle from 5[%] to DutyRef[%]
+				for(int duty = 10; duty <= DutyRef; duty += 5)
+				{
+					SetPwmDuty(&BLDCHandle, duty);
+					Delay_ms(300);
+				}
+			}
+
+			else if(MotorState == START)
+			{
+				// 1. Change MotorState from START to STOP
+				MotorState = STOP;
+
+				// 2. Decrease PWM duty cycle from DutyRef[%] to 0[%]
+				for(int duty = DutyRef; duty >= 0; duty -= 5)
+				{
+					SetPwmDuty(&BLDCHandle, duty);
+					Delay_ms(300);
+				}
+
+				// 3. Wait until the BLDC motor stops
+				Delay_ms(100);
+
+				// 4. Disable EXTI of Hall sensor
+				DISABLE_HALLSENSOR_EXTI();
+
+				// 5. Clear GPIO pin of Top side(UT, VT, WT)
+				GPIO_WritePin(BLDCHandle.GPIO_List.GPIOx_Top, BLDCHandle.GPIO_List.GPIO_Pins_Top, GPIO_PIN_RESET);
+			}
+
+			ButtonFlag = FLAG_RESET;
+		}
 	}
-}
-
-
-void GPIO_TestInit(void)
-{
-	GPIO_InitTypeDef GPIOInit;
-
-	memset(&GPIOInit, 0, sizeof(GPIOInit));
-
-	GPIOInit.Pin = GPIO_PIN_1;
-	GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIOInit.Pull = GPIO_NOPULL;
-	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(GPIOA, &GPIOInit);
 }

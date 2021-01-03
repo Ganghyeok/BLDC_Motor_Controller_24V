@@ -16,7 +16,7 @@
  **************************************************************************************************************/
 
 /* Initialization and de-initialization functions *****************************/
-void GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
+void GPIO_Init(GPIO_TypeDef *GPIOx, GPIO_InitTypeDef *GPIO_Init)
 {
 	uint32_t config = 0x0U;
 	volatile uint32_t *configRegister;
