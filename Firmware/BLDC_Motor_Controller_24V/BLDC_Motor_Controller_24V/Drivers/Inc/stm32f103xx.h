@@ -9,6 +9,7 @@
 #define STM32F103XX_H_
 
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>

@@ -116,3 +116,112 @@ void TIM_PWM_MspInit(TIM_HandleTypeDef *pTIMHandle)
 	// 2. Configure CLOCK for TIM
 	TIM_PeripheralClockControl(pTIMHandle->Instance, ENABLE);
 }
+
+
+void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle)
+{
+	GPIO_InitTypeDef GPIOInit;
+
+	memset(&GPIOInit, 0, sizeof(GPIOInit));
+
+	if(pBLDCHandle->Instance == BLDC1)
+	{
+	/************************************************************************
+	 *			Low level init GPIO of UT/VT/WT, UB/VB/WB, HA/HB/HC			*
+	 ***********************************************************************/
+
+		BLDC1Handle.Init.GPIOx_Top = GPIOB;
+		BLDC1Handle.Init.GPIO_Pin_UT = GPIO_PIN_0;
+		BLDC1Handle.Init.GPIO_Pin_VT = GPIO_PIN_1;
+		BLDC1Handle.Init.GPIO_Pin_WT = GPIO_PIN_2;
+		BLDC1Handle.Init.GPIO_Pins_Top = BLDC1Handle.Init.GPIO_Pin_UT | BLDC1Handle.Init.GPIO_Pin_VT | BLDC1Handle.Init.GPIO_Pin_WT;
+
+		BLDC1Handle.Init.GPIOx_Bottom = GPIOB;
+		BLDC1Handle.Init.GPIO_Pin_UB = GPIO_PIN_6;
+		BLDC1Handle.Init.GPIO_Pin_VB = GPIO_PIN_7;
+		BLDC1Handle.Init.GPIO_Pin_WB = GPIO_PIN_8;
+		BLDC1Handle.Init.GPIO_Pins_Bottom = BLDC1Handle.Init.GPIO_Pin_UB | BLDC1Handle.Init.GPIO_Pin_VB | BLDC1Handle.Init.GPIO_Pin_WB;
+
+		BLDC1Handle.Init.GPIOx_Hall = GPIOC;
+		BLDC1Handle.Init.GPIO_Pin_HA = GPIO_PIN_6;
+		BLDC1Handle.Init.GPIO_Pin_HB = GPIO_PIN_7;
+		BLDC1Handle.Init.GPIO_Pin_HC = GPIO_PIN_8;
+		BLDC1Handle.Init.GPIO_Pins_Hall = BLDC1Handle.Init.GPIO_Pin_HA | BLDC1Handle.Init.GPIO_Pin_HB | BLDC1Handle.Init.GPIO_Pin_HC;
+
+
+		// 1. Initialize GPIO for UT, VT, WT to GPIO Output mode
+		GPIOInit.Pin = pBLDCHandle->Init.GPIO_Pins_Top;
+		GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
+		GPIOInit.Pull = GPIO_NOPULL;
+		GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
+		GPIO_Init(pBLDCHandle->Init.GPIOx_Top, &GPIOInit);
+		Delay_ms(10);
+
+		GPIO_WritePin(pBLDCHandle->Init.GPIOx_Top, pBLDCHandle->Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+
+
+		// 2. Initialize GPIO for UB, VB, WB to GPIO Output mode
+		GPIOInit.Pin = pBLDCHandle->Init.GPIO_Pins_Bottom;
+		GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
+		GPIOInit.Pull = GPIO_NOPULL;
+		GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
+		GPIO_Init(pBLDCHandle->Init.GPIOx_Bottom, &GPIOInit);
+		Delay_ms(10);
+
+		GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_RESET);
+
+
+		// 3. Charge Bootstrap Capacitor for 10ms
+		Delay_ms(10);
+		GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_SET);
+		Delay_ms(10);
+		GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_RESET);
+
+
+
+	/********************************************************************
+	 *			Low level init EXTI for Hall Sensor interrupt			*
+	 ********************************************************************/
+
+		// 1. Configure GPIO of EXTI
+		memset(&GPIOInit, 0, sizeof(GPIOInit));
+
+		GPIOInit.Pin = pBLDCHandle->Init.GPIO_Pins_Hall;
+		GPIOInit.Mode = GPIO_MODE_IT_RISING_FALLING;
+		GPIOInit.Pull = GPIO_NOPULL;
+		GPIO_Init(pBLDCHandle->Init.GPIOx_Hall, &GPIOInit);
+
+		// 2. Configure NVIC of EXTI
+		//NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE);		// NVIC IRQ for EXTI will be enabled in main function when START Button is pressed
+
+
+
+	/********************************************************************
+	 *				Low level init TIM to generate PWM signals			*
+	 ********************************************************************/
+
+		pBLDCHandle->Init.TIM_Handle = &TIM4Handle;
+		pBLDCHandle->Init.TIM_Handle->Instance = TIM4;
+		pBLDCHandle->Init.TIM_Handle->Init.CounterMode = TIM_COUNTERMODE_UP;
+		pBLDCHandle->Init.TIM_Handle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		pBLDCHandle->Init.TIM_Handle->Init.Prescaler = (36-1);		//   72MHz / 36 = 2MHz
+		pBLDCHandle->Init.TIM_Handle->Init.Period = (100-1);		//   2MHz / 100 = 20kHz
+		TIM_PWM_Init(pBLDCHandle->Init.TIM_Handle);
+
+		TIM_OC_InitTypeDef TIM4_PWMConfig;
+
+		memset(&TIM4_PWMConfig, 0, sizeof(TIM4_PWMConfig));
+
+		TIM4_PWMConfig.OCMode = TIM_OCMODE_PWM1;
+		TIM4_PWMConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+
+		TIM4_PWMConfig.Pulse = 0;	// Initially, 0% duty
+		TIM_PWM_ConfigChannel(pBLDCHandle->Init.TIM_Handle, &TIM4_PWMConfig, TIM_CHANNEL_1);
+
+		TIM4_PWMConfig.Pulse = 0;	// Initially, 0% duty
+		TIM_PWM_ConfigChannel(pBLDCHandle->Init.TIM_Handle, &TIM4_PWMConfig, TIM_CHANNEL_2);
+
+		TIM4_PWMConfig.Pulse = 0;	// Initially, 0% duty
+		TIM_PWM_ConfigChannel(pBLDCHandle->Init.TIM_Handle, &TIM4_PWMConfig, TIM_CHANNEL_3);
+	}
+}

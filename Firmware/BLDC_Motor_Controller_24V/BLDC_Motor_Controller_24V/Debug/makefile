@@ -41,7 +41,7 @@ all: BLDC_Motor_Controller_24V.elf secondary-outputs
 
 # Tool invocations
 BLDC_Motor_Controller_24V.elf: $(OBJS) $(USER_OBJS) C:\Users\rkdgu\Documents\Projects\24V\ BLDC\ Motor\ Controller\Firmware\BLDC_Motor_Controller_24V\BLDC_Motor_Controller_24V\STM32F103RCTX_FLASH.ld
-	arm-none-eabi-gcc -o "BLDC_Motor_Controller_24V.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\rkdgu\Documents\Projects\24V BLDC Motor Controller\Firmware\BLDC_Motor_Controller_24V\BLDC_Motor_Controller_24V\STM32F103RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_Motor_Controller_24V.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "BLDC_Motor_Controller_24V.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\rkdgu\Documents\Projects\24V BLDC Motor Controller\Firmware\BLDC_Motor_Controller_24V\BLDC_Motor_Controller_24V\STM32F103RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_Motor_Controller_24V.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -32,64 +32,74 @@ int main(void)
 
 	// 3. Initialize peripherals
 	Button_Init();				// Initialize peripherals related to Button
-	BLDC_Init(&BLDCHandle);		// Initialize peripherals related to BLDC motor
-	TIM6_Init(&TIM6Handle);		// Initialize TIM6 to generate interrupt of 1ms period
+	BLDC1_Init();				// Initialize peripherals related to BLDC motor
+	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
+	UART2_Init();
 	Delay_ms(10);
 
 	// 4. Start PWM for UB, VB, WB
-	StartTimerPwm(&BLDCHandle);
+	StartTimerPwm(&BLDC1Handle);
 	Delay_ms(10);
 
 	// 5. Disable All PWM channels
-	DisableTimerPwmChannel(&BLDCHandle);
+	DisableTimerPwmChannel(&BLDC1Handle);
 	Delay_ms(10);
 
 	// 6. Set Desired PWM duty to 80%
-	BLDC_SET_REF_DUTY(80);
+	BLDC_SET_ROTATION_DIRECTION(&BLDC1Handle, CW);
+	BLDC_SET_REFERENCE_DUTY(80);
 
+	char HallCountStr[10] = {0,};
 
 	while(1)
 	{
+		sprintf(HallCountStr, "%.2lf", (double)BLDC1Handle.Position);
+		strcat(HallCountStr, "[deg]\n");
+		USART_Transmit(&UART2Handle, (uint8_t*)HallCountStr, strlen((char*)HallCountStr));
+		Delay_ms(1000);
+
 		// 1. Check the START/STOP Button is pressed
 		if(ButtonFlag == FLAG_SET)
 		{
-			if(MotorState == STOP)
+			if(BLDC1Handle.MotorState == STOP)
 			{
 				// 1. Change MotorState from STOP to START
-				MotorState = START;
+				BLDC1Handle.MotorState = START;
 
 				// 2. Enable EXTI of Hall sensor
 				ENABLE_HALLSENSOR_EXTI();
 
 				// 3. Drive motor to trigger EXTI
-				SetPwmDuty(&BLDCHandle, 10);
+				SetPwmDuty(&BLDC1Handle, 10);
 
 				// 4. Charge Bootstrap Capacitor for 10ms before Drive BLDC motor
-				BLDC_BootstrapCap_Charge(&BLDCHandle);
+				BLDC_BootstrapCap_Charge(&BLDC1Handle);
 
 				// 5. Detect current HallPhase location
-				HallPhase = (READ_BIT(GPIOC->IDR, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8)) >> 6U;
+				BLDC1Handle.HallPhase = (READ_BIT(GPIOC->IDR, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8)) >> 6U;
+
+				BLDC_FIND_OLD_HALLPHASE(&BLDC1Handle);
 
 				// 6. Drive BLDC motor according to HallPhase location
-				BLDC_Drive(&BLDCHandle, HallPhase);
+				BLDC_Drive(&BLDC1Handle);
 
 				// 7. Increase PWM duty cycle from 5[%] to DutyRef[%]
 				for(int duty = 10; duty <= DutyRef; duty += 5)
 				{
-					SetPwmDuty(&BLDCHandle, duty);
+					SetPwmDuty(&BLDC1Handle, duty);
 					Delay_ms(300);
 				}
 			}
 
-			else if(MotorState == START)
+			else if(BLDC1Handle.MotorState == START)
 			{
 				// 1. Change MotorState from START to STOP
-				MotorState = STOP;
+				BLDC1Handle.MotorState = STOP;
 
 				// 2. Decrease PWM duty cycle from DutyRef[%] to 0[%]
 				for(int duty = DutyRef; duty >= 0; duty -= 5)
 				{
-					SetPwmDuty(&BLDCHandle, duty);
+					SetPwmDuty(&BLDC1Handle, duty);
 					Delay_ms(300);
 				}
 
@@ -100,7 +110,7 @@ int main(void)
 				DISABLE_HALLSENSOR_EXTI();
 
 				// 5. Clear GPIO pin of Top side(UT, VT, WT)
-				GPIO_WritePin(BLDCHandle.GPIO_List.GPIOx_Top, BLDCHandle.GPIO_List.GPIO_Pins_Top, GPIO_PIN_RESET);
+				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
 			}
 
 			ButtonFlag = FLAG_RESET;

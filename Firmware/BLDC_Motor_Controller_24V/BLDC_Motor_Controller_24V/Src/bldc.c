@@ -11,49 +11,77 @@
 
 uint8_t DutyRef = 0;
 
-/****************************************************************************************/
-/*																						*/
-/*									BLDC Motor functions								*/
-/*																						*/
-/****************************************************************************************/
 
-void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle, uint16_t hallPhase)
+/**************************************************************************************************************
+ * 																											  *
+ * 											APIs supported by this driver									  *
+ * 						For more information about the APIs, Check the function definitions					  *
+ * 									  																		  *
+ **************************************************************************************************************/
+
+void BLDC_Init(BLDC_HandleTypeDef *pBLDCHandle)
 {
-	switch (hallPhase)
+	// Init the Low level hardware of BLDC : GPIO, EXTI, TIMER
+	BLDC_MspInit(pBLDCHandle);
+
+}
+
+
+__weak void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle)
+{
+	/* Prevent unused argument(s) compilation warning */
+		UNUSED(pBLDCHandle);
+
+	/* NOTE : This function should not be modified, when the callback is needed,
+	 * 		  the pBLDCHandle could be implemented in the user file
+	 * 		  (This is a weak implementation. The user application may override this function)
+	 */
+}
+
+
+void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle)
+{
+	switch(pBLDCHandle->HallPhase)
 	{
 		case Phase1:
 		{
-			BLDC_Step2(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step5(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step2(pBLDCHandle);
 			break;
 		}
 
 		case Phase2:
 		{
-			BLDC_Step1(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step4(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step1(pBLDCHandle);
 			break;
 		}
 
 		case Phase3:
 		{
-			BLDC_Step6(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step3(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step6(pBLDCHandle);
 			break;
 		}
 
 		case Phase4:
 		{
-			BLDC_Step5(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step2(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step5(pBLDCHandle);
 			break;
 		}
 
 		case Phase5:
 		{
-			BLDC_Step4(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step1(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step4(pBLDCHandle);
 			break;
 		}
 
 		case Phase6:
 		{
-			BLDC_Step3(pBLDCHandle);
+			if(pBLDCHandle->RotationDir == CW)				BLDC_Step6(pBLDCHandle);
+			else if(pBLDCHandle->RotationDir == CCW)		BLDC_Step3(pBLDCHandle);
 			break;
 		}
 
@@ -63,13 +91,63 @@ void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle, uint16_t hallPhase)
 }
 
 
+void BLDC_Get_Position(BLDC_HandleTypeDef *pBLDCHandle)
+{
+	switch(pBLDCHandle->HallPhase)
+	{
+		case Phase1:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase2)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase6)		pBLDCHandle->HallCount--;
+			break;
+		}
+		case Phase2:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase3)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase1)		pBLDCHandle->HallCount--;
+			break;
+		}
+		case Phase3:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase4)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase2)		pBLDCHandle->HallCount--;
+			break;
+		}
+		case Phase4:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase5)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase3)		pBLDCHandle->HallCount--;
+			break;
+		}
+		case Phase5:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase6)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase4)		pBLDCHandle->HallCount--;
+			break;
+		}
+		case Phase6:
+		{
+			if(pBLDCHandle->OldHallPhase == Phase1)				pBLDCHandle->HallCount++;
+			else if(pBLDCHandle->OldHallPhase == Phase5)		pBLDCHandle->HallCount--;
+			break;
+		}
+		default :
+			break;
+	}
+
+	pBLDCHandle->Position = (pBLDCHandle->HallCount) * (pBLDCHandle->MotorResolution);
+
+	pBLDCHandle->OldHallPhase = pBLDCHandle->HallPhase;
+}
+
+
 void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. Clear GPIO pin of Top side(UT, VT, WT) and Disable All PWM channels
-	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Top, pBLDCHandle->GPIO_List.GPIO_Pins_Top, GPIO_PIN_RESET);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	GPIO_WritePin(pBLDCHandle->Init.GPIOx_Top, pBLDCHandle->Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 	Delay_ms(10);
 
 	// 2. Re-initialize GPIO pins from TIM PWM channels to GPIO Output mode
@@ -78,32 +156,32 @@ void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
 	// 3. Re-initialize GPIO pins to GPIO Output mode
-	GPIOInit.Pin = pBLDCHandle->GPIO_List.GPIO_Pins_Bottom;
+	GPIOInit.Pin = pBLDCHandle->Init.GPIO_Pins_Bottom;
 	GPIOInit.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(pBLDCHandle->GPIO_List.GPIOx_Bottom, &GPIOInit);
+	GPIO_Init(pBLDCHandle->Init.GPIOx_Bottom, &GPIOInit);
 	Delay_ms(10);
 
 	// 4. Charge Bootstrap Capacitor for 10ms
-	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Bottom, pBLDCHandle->GPIO_List.GPIO_Pins_Bottom, GPIO_PIN_SET);
+	GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_SET);
 	Delay_ms(10);
-	GPIO_WritePin(pBLDCHandle->GPIO_List.GPIOx_Bottom, pBLDCHandle->GPIO_List.GPIO_Pins_Bottom, GPIO_PIN_RESET);
+	GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_RESET);
 
 	// 5. Re-initialize GPIO pins from GPIO Output mode to TIM PWM channels
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
-	GPIOInit.Pin = pBLDCHandle->GPIO_List.GPIO_Pins_Bottom;
+	GPIOInit.Pin = pBLDCHandle->Init.GPIO_Pins_Bottom;
 	GPIOInit.Mode = GPIO_MODE_AF_PP;
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_Init(pBLDCHandle->GPIO_List.GPIOx_Bottom, &GPIOInit);
+	GPIO_Init(pBLDCHandle->Init.GPIOx_Bottom, &GPIOInit);
 	Delay_ms(10);
 
 	// 6. Enable All PWM channels
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 	Delay_ms(10);
 }
 
@@ -111,67 +189,67 @@ void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 void BLDC_Step1(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. UT Logic On (PB0)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_UT, (pBLDCHandle->GPIO_List.GPIO_Pin_VT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_UT, (pBLDCHandle->Init.GPIO_Pin_VT | pBLDCHandle->Init.GPIO_Pin_WT));
 
 	// 2. VB PWM On (PB7)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 }
 
 void BLDC_Step2(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. WT Logic On (PB2)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_WT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_VT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_WT, (pBLDCHandle->Init.GPIO_Pin_UT | pBLDCHandle->Init.GPIO_Pin_VT));
 
 	// 2. VB PWM On (PB7)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 }
 
 void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. WT Logic On (PB2)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_WT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_VT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_WT, (pBLDCHandle->Init.GPIO_Pin_UT | pBLDCHandle->Init.GPIO_Pin_VT));
 
 	// 2. UB PWM On (PB6)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 }
 
 void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. VT Logic On (PB1)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_VT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_VT, (pBLDCHandle->Init.GPIO_Pin_UT | pBLDCHandle->Init.GPIO_Pin_WT));
 
 	// 2. UB PWM On (PB6)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 }
 
 void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. VT Logic On (PB1)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_VT, (pBLDCHandle->GPIO_List.GPIO_Pin_UT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_VT, (pBLDCHandle->Init.GPIO_Pin_UT | pBLDCHandle->Init.GPIO_Pin_WT));
 
 	// 2. WB PWM On (PB8)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 }
 
 void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. UT Logic On (PB0)
-	GPIO_ModifyPin(GPIOB, pBLDCHandle->GPIO_List.GPIO_Pin_UT, (pBLDCHandle->GPIO_List.GPIO_Pin_VT | pBLDCHandle->GPIO_List.GPIO_Pin_WT));
+	GPIO_ModifyPin(GPIOB, pBLDCHandle->Init.GPIO_Pin_UT, (pBLDCHandle->Init.GPIO_Pin_VT | pBLDCHandle->Init.GPIO_Pin_WT));
 
 	// 2. WB PWM On (PB8)
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_1);
-	TIM_DISABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_2);
-	TIM_ENABLE_CHANNEL(pBLDCHandle->TIM_Handle, TIM_CHANNEL_3);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
+	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
+	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 }
 
 /****************************************************************************************/

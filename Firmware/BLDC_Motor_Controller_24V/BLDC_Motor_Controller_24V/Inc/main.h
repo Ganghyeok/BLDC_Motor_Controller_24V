@@ -18,29 +18,27 @@
 #define ENABLE_HALLSENSOR_EXTI()				NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE)
 #define DISABLE_HALLSENSOR_EXTI()				NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, DISABLE)
 
+
 /* Extern Global variables */
 extern TIM_HandleTypeDef TIM6Handle;
 extern TIM_HandleTypeDef TIM4Handle;
-extern BLDC_HandleTypeDef BLDCHandle;
-extern uint8_t MotorState;
+extern BLDC_HandleTypeDef BLDC1Handle;
+extern UART_HandleTypeDef UART2Handle;
 extern uint8_t ButtonFlag;
-extern uint16_t HallPhase;
-extern uint8_t DutyRef;
+extern uint8_t msg1[100];
+
 
 /* Extern Initialization functions */
 extern void Button_Init(void);
-extern void BLDC_Init(BLDC_HandleTypeDef *pBLDCHandle);
-extern void GPIO_BLDC_Init(BLDC_HandleTypeDef *pBLDCHandle);
-extern void UART2_Init(UART_HandleTypeDef *pUARTHandle);
-extern void TIM6_Init(TIM_HandleTypeDef *pTIMHandle);
-extern void TIM1_Init(TIM_HandleTypeDef *pTIMHandle);
-extern void TIM3_Init(TIM_HandleTypeDef *pTIMHandle);
-extern void TIM4_Init(BLDC_HandleTypeDef *pBLDCHandle);
-extern void EXTI_Init(BLDC_HandleTypeDef *pBLDCHandle);
+extern void BLDC1_Init(void);
+extern void UART2_Init(void);
+extern void TIM6_Init(void);
+
 
 /* Extern Callback functions */
 extern void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle);
 extern void EXTI_Callback(uint32_t GPIO_Pin);
+
 
 /* Extern Group of functions which belong to main function */
 extern void MemsetHandleStructure(void);

@@ -8,12 +8,6 @@
 #include "main.h"
 
 
-void USART1_IRQHandler(void)
-{
-
-}
-
-
 void TIM6_IRQHandler(void)
 {
 	TIM_IRQHandling(&TIM6Handle);
@@ -22,13 +16,13 @@ void TIM6_IRQHandler(void)
 
 void EXTI9_5_IRQHandler(void)
 {
-	EXTI_IRQHandling(BLDCHandle.GPIO_List.GPIO_Pins_Hall);
+	EXTI_IRQHandling(BLDC1Handle.Init.GPIO_Pins_Hall);
 }
 
 
 void EXTI0_IRQHandler(void)
 {
-	EXTI->PR |= GPIO_PIN_0;
-
-	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+//	EXTI->PR |= GPIO_PIN_0;
+//
+//	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
 }

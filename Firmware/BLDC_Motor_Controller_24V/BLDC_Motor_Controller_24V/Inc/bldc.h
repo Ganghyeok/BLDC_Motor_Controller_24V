@@ -12,23 +12,82 @@
 #include "common.h"
 
 
-/* BLDC Macro definitions */
-#define Phase1			3
-#define Phase2			2
-#define Phase3			6
-#define Phase4			4
-#define Phase5			5
-#define Phase6			1
-#define START			0
-#define STOP			1
+/* BLDC Motor type */
+#define BLDC1							1
+#define BLDC2							2
 
+
+/* BLDC Macro definitions */
+#define Phase1							3
+#define Phase2							2
+#define Phase3							6
+#define Phase4							4
+#define Phase5							5
+#define Phase6							1
+#define START							0
+#define STOP							1
+#define CW								0
+#define CCW								1
 
 /* BLDC Macro functions */
-#define BLDC_SET_REF_DUTY(duty)			(DutyRef = duty)
+#define BLDC_SET_ROTATION_DIRECTION(_HANDLE_, dir)		( (_HANDLE_)->RotationDir = (dir == CW) ? CW : CCW )
+
+#define BLDC_SET_REFERENCE_DUTY(duty)			( DutyRef = (duty > 95) ? 95 : \
+															(duty < 0)  ? 0  : duty )
+
+
+#define BLDC_FIND_OLD_HALLPHASE(_HANDLE_)		do{																								\
+														switch( (_HANDLE_)->HallPhase )															\
+														{																						\
+															case Phase1:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase2;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase6;	\
+																break;																			\
+															}																					\
+															case Phase2:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase3;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase1;	\
+																break;																			\
+															}																					\
+															case Phase3:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase4;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase2;	\
+																break;																			\
+															}																					\
+															case Phase4:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase5;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase3;	\
+																break;																			\
+															}																					\
+															case Phase5:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase6;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase4;	\
+																break;																			\
+															}																					\
+															case Phase6:																		\
+															{																					\
+																if((_HANDLE_)->RotationDir == CW)			(_HANDLE_)->OldHallPhase = Phase1;	\
+																else if((_HANDLE_)->RotationDir == CCW)		(_HANDLE_)->OldHallPhase = Phase5;	\
+																break;																			\
+															}																					\
+															default :																			\
+																break;																			\
+														}																						\
+																																				\
+																																				\
+													}while(0)
+
+
+/* BLDC global variables */
+extern uint8_t DutyRef;
 
 
 /* BLDC Configuration structure */
-
 typedef struct
 {
 	GPIO_TypeDef 		*GPIOx_Top;
@@ -61,20 +120,40 @@ typedef struct
 
 	uint32_t			GPIO_Pin_HC;
 
-} BLDC_GPIOList;
+	TIM_HandleTypeDef 	*TIM_Handle;
+
+} BLDC_InitTypeDef;
 
 
 typedef struct
 {
-	BLDC_GPIOList		GPIO_List;
+	uint8_t					Instance;
 
-	TIM_HandleTypeDef 	*TIM_Handle;
+	BLDC_InitTypeDef		Init;
+
+	uint8_t 				MotorState;
+
+	uint8_t 				RotationDir;
+
+	uint16_t 				HallPhase;
+
+	uint16_t 				OldHallPhase;
+
+	int32_t 				HallCount;
+
+	double					MotorResolution;
+
+	double 					Position;
 
 } BLDC_HandleTypeDef;
 
 
+
 /* BLDC Motor functions */
-void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle, uint16_t hallPhase);
+void BLDC_Init(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_Get_Position(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step1(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step2(BLDC_HandleTypeDef *pBLDCHandle);
