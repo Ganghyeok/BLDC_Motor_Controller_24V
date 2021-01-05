@@ -45,10 +45,15 @@ void Button_Init(void)
 void BLDC1_Init(void)
 {
 	BLDC1Handle.Instance = BLDC1;
+	BLDC1Handle.MotorPoleNum = 8;
+	BLDC1Handle.MotorGearRatio = 4;
+	BLDC1Handle.MotorResolution = (double)360/6/(BLDC1Handle.MotorPoleNum/2)/4;
 	BLDC1Handle.MotorState = STOP;
 	BLDC1Handle.HallCount = 0;
+	BLDC1Handle.OldHallCount = 0;
 	BLDC1Handle.Position = (double)0;
-	BLDC1Handle.MotorResolution = (double)360/6/(8/2)/4;
+	BLDC1Handle.Speed = (double)0;
+
 	BLDC_Init(&BLDC1Handle);
 }
 
@@ -76,7 +81,7 @@ void TIM6_Init(void)
 	TIM6Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	TIM6Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	TIM6Handle.Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
-	TIM6Handle.Init.Period = (10-1);	// 10kHz / 10 = 1kHz
+	TIM6Handle.Init.Period = (1000-1);	// 10kHz / 1000 = 10Hz
 	TIM6Handle.Init.RepetitionCounter = 0;
 	TIM_Base_Init(&TIM6Handle);
 
@@ -96,7 +101,7 @@ void TIM6_Init(void)
 
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
-	/* This Callback function is executed every 1ms by TIM6 */
+	/* This Callback function is executed every 100ms by TIM6 */
 
 	if(pTIMHandle->Instance == TIM6)
 	{
@@ -114,8 +119,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 		}
 
 		// 2. Calculate the Speed of BLDC Motor
-
-
+		BLDC_Get_Speed(&BLDC1Handle, 0.1);
 	}
 }
 

@@ -47,15 +47,16 @@ int main(void)
 
 	// 6. Set Desired PWM duty to 80%
 	BLDC_SET_ROTATION_DIRECTION(&BLDC1Handle, CW);
-	BLDC_SET_REFERENCE_DUTY(80);
+	BLDC_SET_REFERENCE_DUTY(90);
 
-	char HallCountStr[10] = {0,};
+
+	char MotorSpeedStr[10] = {0,};
 
 	while(1)
 	{
-		sprintf(HallCountStr, "%.2lf", (double)BLDC1Handle.Position);
-		strcat(HallCountStr, "[deg]\n");
-		USART_Transmit(&UART2Handle, (uint8_t*)HallCountStr, strlen((char*)HallCountStr));
+		sprintf(MotorSpeedStr, "%.2lf", BLDC1Handle.Speed);
+		strcat(MotorSpeedStr, "[RPM]\n");
+		USART_Transmit(&UART2Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
 		Delay_ms(1000);
 
 		// 1. Check the START/STOP Button is pressed

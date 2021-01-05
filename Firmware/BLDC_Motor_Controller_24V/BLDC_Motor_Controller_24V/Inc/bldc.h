@@ -131,6 +131,12 @@ typedef struct
 
 	BLDC_InitTypeDef		Init;
 
+	uint8_t					MotorPoleNum;
+
+	uint8_t					MotorGearRatio;
+
+	double					MotorResolution;
+
 	uint8_t 				MotorState;
 
 	uint8_t 				RotationDir;
@@ -141,9 +147,11 @@ typedef struct
 
 	int32_t 				HallCount;
 
-	double					MotorResolution;
+	int32_t					OldHallCount;
 
 	double 					Position;
+
+	double					Speed;
 
 } BLDC_HandleTypeDef;
 
@@ -153,6 +161,7 @@ typedef struct
 void BLDC_Init(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_Get_Speed(BLDC_HandleTypeDef *pBLDCHandle, double Ts);
 void BLDC_Get_Position(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step1(BLDC_HandleTypeDef *pBLDCHandle);

@@ -91,6 +91,17 @@ void BLDC_Drive(BLDC_HandleTypeDef *pBLDCHandle)
 }
 
 
+void BLDC_Get_Speed(BLDC_HandleTypeDef *pBLDCHandle, double Ts)
+{
+	int16_t deltaHallCount;
+
+	deltaHallCount = pBLDCHandle->HallCount - pBLDCHandle->OldHallCount;
+	pBLDCHandle->OldHallCount = pBLDCHandle->HallCount;
+
+	pBLDCHandle->Speed = 60. * (double)deltaHallCount / (pBLDCHandle->MotorPoleNum * pBLDCHandle->MotorGearRatio * 3.) / Ts;
+}
+
+
 void BLDC_Get_Position(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	switch(pBLDCHandle->HallPhase)
