@@ -26,3 +26,23 @@ void EXTI0_IRQHandler(void)
 //
 //	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
 }
+
+
+void DMA1_Channel7_IRQHandler(void)
+{
+	if( IS_IT_HT() )
+	{
+		DMA1->IFCR |= (1 << 26);
+		DMA1_HT_Complete_Callback();
+	}
+	else if( IS_IT_TC() )
+	{
+		DMA1->IFCR |= (1 << 25);
+		DMA1_FT_Complete_Callback();
+	}
+	else if( IS_IT_TE() )
+	{
+		DMA1->IFCR |= (1 << 27);
+		DMA1_TE_Error_Callback();
+	}
+}

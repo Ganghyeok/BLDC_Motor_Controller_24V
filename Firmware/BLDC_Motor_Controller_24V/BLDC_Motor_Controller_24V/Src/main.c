@@ -35,6 +35,7 @@ int main(void)
 	BLDC1_Init();				// Initialize peripherals related to BLDC motor
 	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
 	UART2_Init();
+	DMA1_Init();
 	Delay_ms(10);
 
 	// 4. Start PWM for UB, VB, WB
@@ -50,15 +51,10 @@ int main(void)
 	BLDC_SET_REFERENCE_DUTY(90);
 
 
-	char MotorSpeedStr[10] = {0,};
+	SET_BIT(USART2->CR3, USART_CR3_DMAT);
 
 	while(1)
 	{
-		sprintf(MotorSpeedStr, "%.2lf", BLDC1Handle.Speed);
-		strcat(MotorSpeedStr, "[RPM]\n");
-		USART_Transmit(&UART2Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
-		Delay_ms(1000);
-
 		// 1. Check the START/STOP Button is pressed
 		if(ButtonFlag == FLAG_SET)
 		{

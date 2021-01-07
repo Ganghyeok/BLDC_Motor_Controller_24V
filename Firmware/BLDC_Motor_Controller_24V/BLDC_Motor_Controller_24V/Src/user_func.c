@@ -15,7 +15,8 @@ UART_HandleTypeDef 		UART2Handle;
 
 uint8_t ButtonFlag = FLAG_RESET;
 
-uint8_t msg1[100] = "Knowing Wife\n";
+uint8_t msg1[100] = "Familiar Wife\n";
+char MotorSpeedStr[5] = {0,};
 
 
 /********************************************************************************************************************
@@ -81,7 +82,7 @@ void TIM6_Init(void)
 	TIM6Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	TIM6Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	TIM6Handle.Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
-	TIM6Handle.Init.Period = (1000-1);	// 10kHz / 1000 = 10Hz
+	TIM6Handle.Init.Period = (500-1);	// 10kHz / 500 = 20Hz
 	TIM6Handle.Init.RepetitionCounter = 0;
 	TIM_Base_Init(&TIM6Handle);
 
@@ -93,6 +94,64 @@ void TIM6_Init(void)
 }
 
 
+void DMA1_Init(void)
+{
+	// 1. Enable the peripheral clock for the DMA2
+	RCC_DMA1_CLK_ENABLE();
+
+	// 2. Identify the stream which is suitable for the peripheral (USART2_TX : Channel 7 of DMA1)
+
+	// 3. Identify the channel number on which uart2 peripheral sends DMA request (USART2_TX : Channel 7 of DMA1)
+
+	// 4. Program the source address
+	DMA1_Channel7->CMAR = (uint32_t)MotorSpeedStr;
+
+	// 5. Program the destination address
+	DMA1_Channel7->CPAR = (uint32_t)&USART2->DR;
+
+	// 6. Program number of data items to send
+	DMA1_Channel7->CNDTR = strlen((char*)MotorSpeedStr);;
+
+	// 7. The direction of data transfer(M2P or P2M or M2M)
+	DMA1_Channel7->CCR |= (0x1 << 4);
+
+	// 8. Program the source and destination data width('Byte to Byte' or 'Half word to Half word' or 'Word to Word')
+	DMA1_Channel7->CCR &= ~((0x3 << 8) | (0x3 << 10));
+
+	// 9. Enable memory increment mode
+	DMA1_Channel7->CCR |= (0x1 << 7);
+
+	// 9. Direct mode or FIFO mode
+
+	// 10. Select the FIFO threshold
+
+	// 11. Enable the circular mode if required
+
+	// 12. Single transfer or burst transfer
+
+	// 13. Configure the stream priority
+	DMA1_Channel7->CCR &= ~(0x3 << 12);
+
+	// 14. Enable the stream
+	ENABLE_DMA1_CHANNEL7();
+
+	DMA1_Interrupt_Configuration();
+}
+
+
+void DMA1_Interrupt_Configuration(void)
+{
+	// 1. Enable Half-transfer interrupt
+	//DMA1_Channel7->CCR |= (0x1 << 2);
+
+	// 2. Enable Transfer complete interrupt
+	DMA1_Channel7->CCR |= (0x1 << 1);
+
+	// 3. Enable Transfer error interrupt
+	DMA1_Channel7->CCR |= (0x1 << 3);
+
+	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL7, NVIC_PRIOR_15, ENABLE);
+}
 
 
 /********************************************************************************************************************
@@ -101,7 +160,7 @@ void TIM6_Init(void)
 
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
-	/* This Callback function is executed every 100ms by TIM6 */
+	/* This Callback function is executed every 10ms by TIM6 */
 
 	if(pTIMHandle->Instance == TIM6)
 	{
@@ -119,7 +178,21 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 		}
 
 		// 2. Calculate the Speed of BLDC Motor
-		BLDC_Get_Speed(&BLDC1Handle, 0.1);
+		uint16_t motorSpeed;
+
+		BLDC_Get_Speed(&BLDC1Handle, 0.05);
+		motorSpeed = (uint16_t)BLDC1Handle.Speed;
+
+		MotorSpeedStr[0] = (motorSpeed / 1000) + 48;
+		MotorSpeedStr[1] = ((motorSpeed % 1000) / 100) + 48;
+		MotorSpeedStr[2] = ((motorSpeed % 100) / 10) + 48;
+		MotorSpeedStr[3] = (motorSpeed % 10) + 48;
+		MotorSpeedStr[4] = '\n';
+
+
+		DISABLE_DMA1_CHANNEL7();
+		DMA1_Channel7->CNDTR = strlen((char*)MotorSpeedStr);
+		ENABLE_DMA1_CHANNEL7();
 	}
 }
 
@@ -139,6 +212,27 @@ void EXTI_Callback(uint32_t GPIO_Pin)
 	UNUSED(GPIO_Pin);
 }
 
+
+void DMA1_HT_Complete_Callback(void)
+{
+
+
+}
+
+
+void DMA1_FT_Complete_Callback(void)
+{
+//	uint16_t length = strlen((char*)MotorSpeedStr);
+//	DISABLE_DMA1_CHANNEL7();
+//	DMA1_Channel7->CNDTR = length;
+//	ENABLE_DMA1_CHANNEL7();
+}
+
+
+void DMA1_TE_Error_Callback(void)
+{
+
+}
 
 /********************************************************************************************************************
  *							Group of functions which belong to main function for increasing Readability				*

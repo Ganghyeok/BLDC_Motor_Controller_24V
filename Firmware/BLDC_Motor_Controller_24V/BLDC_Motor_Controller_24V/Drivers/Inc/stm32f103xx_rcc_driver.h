@@ -305,6 +305,26 @@ typedef struct
  * 									  																		  *
  **************************************************************************************************************/
 
+/* AHB Peripheral Clock Enable function */
+#define RCC_DMA1_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN) )
+#define RCC_DMA2_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA2EN) )
+#define RCC_SRAMITF_CLK_ENABLE()		( SET_BIT(RCC->AHBENR, RCC_AHBENR_SRAMEN) )
+#define RCC_FLITF_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_FLITFEN) )
+#define RCC_CRC_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_CRCEN) )
+#define RCC_FSMC_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_FSMC) )
+#define RCC_SDIO_CLK_ENABLE()			( SET_BIT(RCC->AHBENR, RCC_AHBENR_SDIOEN) )
+
+
+/* AHB Peripheral Clock Disable function */
+#define RCC_DMA1_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN) )
+#define RCC_DMA2_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_DMA2EN) )
+#define RCC_SRAMITF_CLK_DISABLE()		( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_SRAMEN) )
+#define RCC_FLITF_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_FLITFEN) )
+#define RCC_CRC_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_CRCEN) )
+#define RCC_FSMC_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_FSMC) )
+#define RCC_SDIO_CLK_DISABLE()			( CLEAR_BIT(RCC->AHBENR, RCC_AHBENR_SDIOEN) )
+
+
 /* APB2 Peripheral Clock Enable function */
 #define RCC_AFIO_CLK_ENABLE()			( SET_BIT(RCC->APB2ENR, RCC_APB2ENR_AFIOEN) )
 #define RCC_GPIOA_CLK_ENABLE()			( SET_BIT(RCC->APB2ENR, RCC_APB2ENR_IOPAEN) )
