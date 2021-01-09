@@ -71,6 +71,10 @@ typedef struct __UART_HandleTypeDef
 
   __IO uint16_t                 RxXferCount;      /*!< UART Rx Transfer Counter           */
 
+  DMA_HandleTypeDef             *hdmatx;          /*!< UART Tx DMA Handle parameters      */
+
+  DMA_HandleTypeDef             *hdmarx;          /*!< UART Rx DMA Handle parameters      */
+
   uint8_t						State;
 
 } UART_HandleTypeDef;
@@ -233,12 +237,13 @@ typedef struct __UART_HandleTypeDef
  **************************************************************************************************************/
 
 void USART_Init(UART_HandleTypeDef *pUSARTHandle);
-void USART_MspInit(USART_TypeDef *USARTx);
+void USART_MspInit(UART_HandleTypeDef *pUSARTHandle);
 void USART_PeripheralClockControl(USART_TypeDef *USARTx, uint8_t En_or_Di);
 void USART_PeripheralControl(USART_TypeDef *USARTx, uint8_t En_or_Di);
 void USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t BaudRate);
 void USART_Transmit(UART_HandleTypeDef *pUSARTHandle, uint8_t *TxBuffer, uint16_t Size);
 uint8_t USART_Transmit_IT(UART_HandleTypeDef *pUSARTHandle, uint8_t *TxBuffer, uint16_t Size);
+void UART_Transmit_DMA(UART_HandleTypeDef *pUSARTHandle, uint8_t *pData, uint16_t Size);
 void USART_IRQHandling(UART_HandleTypeDef *pUSARTHandle);
 
 #endif /* INC_STM32F103XX_USART_DRIVER_H_ */

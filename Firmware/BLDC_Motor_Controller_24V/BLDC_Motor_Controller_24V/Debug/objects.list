@@ -1,3 +1,4 @@
+"Drivers/Src/stm32f103xx_dma_driver.o"
 "Drivers/Src/stm32f103xx_gpio_driver.o"
 "Drivers/Src/stm32f103xx_rcc_driver.o"
 "Drivers/Src/stm32f103xx_tim_driver.o"

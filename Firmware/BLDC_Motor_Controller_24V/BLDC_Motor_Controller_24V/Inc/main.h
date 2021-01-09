@@ -30,9 +30,10 @@ extern TIM_HandleTypeDef TIM6Handle;
 extern TIM_HandleTypeDef TIM4Handle;
 extern BLDC_HandleTypeDef BLDC1Handle;
 extern UART_HandleTypeDef UART2Handle;
+extern DMA_HandleTypeDef DMA1Handle;
 extern uint8_t ButtonFlag;
 extern uint8_t msg1[100];
-extern char MotorSpeedStr[5];
+extern char MotorSpeedStr[6];
 
 
 /* Extern Initialization functions */
@@ -47,9 +48,6 @@ extern void DMA1_Interrupt_Configuration(void);
 /* Extern Callback functions */
 extern void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle);
 extern void EXTI_Callback(uint32_t GPIO_Pin);
-extern void DMA1_HT_Complete_Callback(void);
-extern void DMA1_FT_Complete_Callback(void);
-extern void DMA1_TE_Error_Callback(void);
 
 
 /* Extern Group of functions which belong to main function */

@@ -31,11 +31,13 @@ int main(void)
 	MemsetHandleStructure();
 
 	// 3. Initialize peripherals
+	DMA1_Init();
 	Button_Init();				// Initialize peripherals related to Button
 	BLDC1_Init();				// Initialize peripherals related to BLDC motor
-	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
 	UART2_Init();
-	DMA1_Init();
+	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
+
+
 	Delay_ms(10);
 
 	// 4. Start PWM for UB, VB, WB
@@ -48,10 +50,8 @@ int main(void)
 
 	// 6. Set Desired PWM duty to 80%
 	BLDC_SET_ROTATION_DIRECTION(&BLDC1Handle, CW);
-	BLDC_SET_REFERENCE_DUTY(90);
+	BLDC_SET_REFERENCE_DUTY(80);
 
-
-	SET_BIT(USART2->CR3, USART_CR3_DMAT);
 
 	while(1)
 	{
@@ -73,7 +73,7 @@ int main(void)
 				BLDC_BootstrapCap_Charge(&BLDC1Handle);
 
 				// 5. Detect current HallPhase location
-				BLDC1Handle.HallPhase = (READ_BIT(GPIOC->IDR, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8)) >> 6U;
+				BLDC1Handle.HallPhase = (READ_BIT(GPIOC->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 6U;
 
 				BLDC_FIND_OLD_HALLPHASE(&BLDC1Handle);
 

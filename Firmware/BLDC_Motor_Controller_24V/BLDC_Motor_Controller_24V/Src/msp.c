@@ -8,14 +8,14 @@
 #include "main.h"
 
 
-void USART_MspInit(USART_TypeDef *USARTx)
+void USART_MspInit(UART_HandleTypeDef *pUARTHandle)
 {
 	// 1. Configure GPIO for USART
 	GPIO_HandleTypeDef GPIOHandle;
 
 	memset(&GPIOHandle, 0, sizeof(GPIOHandle));
 
-	if(USARTx == USART1)
+	if(pUARTHandle->Instance == USART1)
 	{
 		// USART1 Tx
 		GPIOHandle.Instance = GPIOA;
@@ -32,8 +32,10 @@ void USART_MspInit(USART_TypeDef *USARTx)
 
 		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
 	}
-	else if(USARTx == USART2)
+	else if(pUARTHandle->Instance == USART2)
 	{
+		/* USART2 GPIO Configuration */
+
 		// USART2 Tx
 		GPIOHandle.Instance = GPIOA;
 		GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
@@ -48,10 +50,25 @@ void USART_MspInit(USART_TypeDef *USARTx)
 		GPIOHandle.Init.Pin = GPIO_PIN_3;
 
 		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
+
+		/* USART2 DMA Configuration */
+		pUARTHandle->hdmatx->Instance = DMA1_Channel7;
+		pUARTHandle->hdmatx->Init.Direction = DMA_MEMORY_TO_PERIPH;
+		pUARTHandle->hdmatx->Init.PeriphInc = DMA_PINC_DISABLE;
+		pUARTHandle->hdmatx->Init.MemInc = DMA_MINC_ENABLE;
+		pUARTHandle->hdmatx->Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+		pUARTHandle->hdmatx->Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+		pUARTHandle->hdmatx->Init.Mode = DMA_NORMAL;
+		pUARTHandle->hdmatx->Init.Priority = DMA_PRIORITY_LOW;
+		DMA_Init(pUARTHandle->hdmatx);
+
+
+		pUARTHandle->hdmatx = &DMA1Handle;
+		DMA1Handle.Parent = pUARTHandle;
 	}
 
 	// 2. Configure CLOCK for USART
-	USART_PeripheralClockControl(USARTx, ENABLE);
+	USART_PeripheralClockControl(pUARTHandle->Instance, ENABLE);
 }
 
 
@@ -68,7 +85,6 @@ void TIM_Base_MspInit(TIM_TypeDef *TIMx)
 		// 3. Configure NVIC for TIM
 		NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
 	}
-
 }
 
 

@@ -5,7 +5,7 @@
  *      Author: Ganghyeok Lim
  */
 
-#include "stm32f103xx_usart_driver.h"
+#include "stm32f103xx.h"
 
 
 /**************************************************************************************************************
@@ -15,13 +15,19 @@
  * 									  																		  *
  **************************************************************************************************************/
 
+static void UART_DMATransmitCplt(DMA_HandleTypeDef *pDMAHandle);
+static void UART_DMATxHalfCplt(DMA_HandleTypeDef *pDMAHandle);
+static void UART_DMAError(DMA_HandleTypeDef *pDMAHandle);
+
+
+
 void USART_Init(UART_HandleTypeDef *pUSARTHandle)
 {
 	// Temporary register for USART configuration
 	uint32_t config = 0;
 
 	// Init the Low level hardware of USART : GPIO, CLOCK
-	USART_MspInit(pUSARTHandle->Instance);
+	USART_MspInit(pUSARTHandle);
 
 	// USARTx Disable for configuration
 	USART_PeripheralControl(pUSARTHandle->Instance, DISABLE);
@@ -56,10 +62,10 @@ void USART_Init(UART_HandleTypeDef *pUSARTHandle)
 
 
 
-__weak void USART_MspInit(USART_TypeDef *USARTx)
+__weak void USART_MspInit(UART_HandleTypeDef *pUSARTHandle)
 {
 	/* Prevent unused argument(s) compilation warning */
-		UNUSED(USARTx);
+		UNUSED(pUSARTHandle);
 
 	/* NOTE : This function should not be modified, when the callback is needed,
 	 * 		  the USART_MspInit could be implemented in the user file
@@ -194,6 +200,68 @@ uint8_t USART_Transmit_IT(UART_HandleTypeDef *pUSARTHandle, uint8_t *TxBuffer, u
 }
 
 
+void UART_Transmit_DMA(UART_HandleTypeDef *pUSARTHandle, uint8_t *pData, uint16_t Size)
+{
+	uint32_t *tmp;
+
+	pUSARTHandle->pTxBuffPtr = pData;
+	pUSARTHandle->TxXferSize = Size;
+	pUSARTHandle->TxXferCount = Size;
+
+    /* Set the UART DMA transfer complete callback */
+	pUSARTHandle->hdmatx->XferCpltCallback = UART_DMATransmitCplt;
+
+    /* Set the UART DMA Half transfer complete callback */
+	pUSARTHandle->hdmatx->XferHalfCpltCallback = UART_DMATxHalfCplt;
+
+    /* Set the DMA error callback */
+	pUSARTHandle->hdmatx->XferErrorCallback = UART_DMAError;
+
+    /* Set the DMA abort callback */
+	pUSARTHandle->hdmatx->XferAbortCallback = NULL;
+
+	/* Enable the UART transmit DMA channel */
+	tmp = (uint32_t *)&pData;
+	DMA_Start_IT(pUSARTHandle->hdmatx, *(uint32_t *)tmp, (uint32_t)&pUSARTHandle->Instance->DR, Size);
+
+	/* Clear the TC flag in the SR register by writing 0 to it */
+	CLEAR_FLAG(pUSARTHandle->Instance->SR, UART_FLAG_TC);
+
+	/* Enable the DMA transfer for transmit request by setting the DMAT bit
+	   in the UART CR3 register */
+	SET_BIT(pUSARTHandle->Instance->CR3, USART_CR3_DMAT);
+}
+
+
+__weak void UART_TxCpltCallback(UART_HandleTypeDef *pUSARTHandle)
+{
+	/* Prevent unused argument(s) compilation warning */
+	UNUSED(pUSARTHandle);
+	/* NOTE: This function should not be modified, when the callback is needed,
+		   the UART_TxCpltCallback could be implemented in the user file
+	*/
+}
+
+
+__weak void UART_TxHalfCpltCallback(UART_HandleTypeDef *pUSARTHandle)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(pUSARTHandle);
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the UART_TxHalfCpltCallback could be implemented in the user file
+   */
+}
+
+
+__weak void UART_ErrorCallback(UART_HandleTypeDef *pUSARTHandle)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(pUSARTHandle);
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the UART_ErrorCallback could be implemented in the user file
+   */
+}
+
 
 __weak void USART_ApplicationEventCallback(UART_HandleTypeDef *pUSARTHandle, uint8_t AppEV)
 {
@@ -206,7 +274,6 @@ __weak void USART_ApplicationEventCallback(UART_HandleTypeDef *pUSARTHandle, uin
 	 * 		  (This is a weak implementation. The user application may override this function)
 	 */
 }
-
 
 
 void USART_IRQHandling(UART_HandleTypeDef *pUSARTHandle)
@@ -284,5 +351,28 @@ void USART_IRQHandling(UART_HandleTypeDef *pUSARTHandle)
 }
 
 
+
+static void UART_DMATransmitCplt(DMA_HandleTypeDef *pDMAHandle)
+{
+	UART_HandleTypeDef *pUSARTHandle = (UART_HandleTypeDef *)((DMA_HandleTypeDef *)pDMAHandle)->Parent;
+
+	UART_TxCpltCallback(pUSARTHandle);
+}
+
+
+static void UART_DMATxHalfCplt(DMA_HandleTypeDef *pDMAHandle)
+{
+	UART_HandleTypeDef *pUSARTHandle = (UART_HandleTypeDef *)((DMA_HandleTypeDef *)pDMAHandle)->Parent;
+
+	UART_TxHalfCpltCallback(pUSARTHandle);
+}
+
+
+static void UART_DMAError(DMA_HandleTypeDef *pDMAHandle)
+{
+	UART_HandleTypeDef *pUSARTHandle = (UART_HandleTypeDef *)((DMA_HandleTypeDef *)pDMAHandle)->Parent;
+
+	UART_ErrorCallback(pUSARTHandle);
+}
 
 

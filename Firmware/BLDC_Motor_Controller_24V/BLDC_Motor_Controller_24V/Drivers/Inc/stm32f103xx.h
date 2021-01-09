@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 /**************************************************************************************************************
@@ -3332,6 +3333,7 @@ typedef struct
  **************************************************************************************************************/
 
 #include "stm32f103xx_rcc_driver.h"
+#include "stm32f103xx_dma_driver.h"
 #include "stm32f103xx_gpio_driver.h"
 #include "stm32f103xx_usart_driver.h"
 #include "stm32f103xx_tim_driver.h"
