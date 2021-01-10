@@ -52,8 +52,14 @@ void BLDC1_Init(void)
 	BLDC1Handle.MotorState = STOP;
 	BLDC1Handle.HallCount = 0;
 	BLDC1Handle.OldHallCount = 0;
-	BLDC1Handle.Position = (double)0;
-	BLDC1Handle.Speed = (double)0;
+	BLDC1Handle.Position = 0;
+	BLDC1Handle.RefPosition = 0;
+	BLDC1Handle.Speed = 0;
+	BLDC1Handle.RefSpeed = 0;
+	BLDC1Handle.Kp = 0;
+	BLDC1Handle.Ki = 0;
+	BLDC1Handle.Kd = 0;
+	BLDC1Handle.PwmPID = 0;
 
 	BLDC_Init(&BLDC1Handle);
 }
@@ -130,7 +136,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 	if(pTIMHandle->Instance == TIM6)
 	{
-		// 1. Check the Button is pressed
+		/* Check the Button is pressed */
 		if(ButtonFlag == FLAG_RESET)
 		{
 			uint8_t buttonState;
@@ -143,23 +149,22 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 			}
 		}
 
-		// 2. Calculate the Speed of BLDC Motor
-		int16_t motorSpeed, motorSpeedAbs;
-
+		/* Calculate the Current Speed of BLDC Motor */
 		BLDC_Get_Speed(&BLDC1Handle, 0.05);
+
+		/* Set PWM duty cycle by PID calculation */
+		BLDC_SpeedPID(&BLDC1Handle, 0.05);
+
+		/* Transmit Motor Speed value to PC through UART2 */
+		int16_t motorSpeed, motorSpeedAbs;
+		uint8_t sign;
+
+
 		motorSpeed = (int16_t)BLDC1Handle.Speed;
 		motorSpeedAbs = abs(motorSpeed);
 
-		char sign;
-
-		if(motorSpeed >= 0)
-		{
-			sign = '+';
-		}
-		else if(motorSpeed < 0)
-		{
-			sign = '-';
-		}
+		if(motorSpeed >= 0)			sign = '+';
+		else if(motorSpeed < 0)		sign = '-';
 
 		MotorSpeedStr[0] = sign;
 		MotorSpeedStr[1] = (motorSpeedAbs / 1000) + 48;

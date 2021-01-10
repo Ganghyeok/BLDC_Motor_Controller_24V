@@ -208,7 +208,7 @@ void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle)
 		GPIO_Init(pBLDCHandle->Init.GPIOx_Hall, &GPIOInit);
 
 		// 2. Configure NVIC of EXTI
-		//NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE);		// NVIC IRQ for EXTI will be enabled in main function when START Button is pressed
+		//NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, ENABLE);		// NVIC IRQ for EXTI will be enabled in main function when MotorState becomes 'RUN'
 
 
 

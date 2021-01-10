@@ -6,11 +6,12 @@
  */
 
 
-#include "bldc.h"
+#include "main.h"
+//#include "bldc.h"
 
 
-uint8_t DutyRef = 0;
-
+static double err = 0, errPrv = 0;
+static double P_term = 0, I_term = 0, D_term = 0;
 
 /**************************************************************************************************************
  * 																											  *
@@ -262,6 +263,35 @@ void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 }
+
+
+void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
+{
+	/* Get PWM duty cycle which is calculated by Error value and PID gain */
+
+	err = pBLDCHandle->RefSpeed - pBLDCHandle->Speed;
+
+	P_term = pBLDCHandle->Kp * err;
+	I_term += pBLDCHandle->Ki * err * dt;
+	D_term = pBLDCHandle->Kd * (err - errPrv);
+
+	pBLDCHandle->PwmPID = P_term + I_term + D_term;
+
+	errPrv = err;
+
+	/* Figure out Rotation direction */
+	if(pBLDCHandle->PwmPID >= 0)		pBLDCHandle->RotationDir = CW;
+	else if(pBLDCHandle->PwmPID < 0)	pBLDCHandle->RotationDir = CCW;
+
+	/* Saturate PWM duty if it exceeds the limit of PWM duty value */
+	uint16_t PwmPID_ABS = (uint16_t)(abs(pBLDCHandle->PwmPID));
+
+	if(PwmPID_ABS > 95)		PwmPID_ABS = 95;
+
+	SetPwmDuty(pBLDCHandle, PwmPID_ABS);
+}
+
+
 
 /****************************************************************************************/
 /*																						*/

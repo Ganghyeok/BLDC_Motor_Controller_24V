@@ -32,7 +32,6 @@ extern BLDC_HandleTypeDef BLDC1Handle;
 extern UART_HandleTypeDef UART2Handle;
 extern DMA_HandleTypeDef DMA1Handle;
 extern uint8_t ButtonFlag;
-extern uint8_t msg1[100];
 extern char MotorSpeedStr[6];
 
 

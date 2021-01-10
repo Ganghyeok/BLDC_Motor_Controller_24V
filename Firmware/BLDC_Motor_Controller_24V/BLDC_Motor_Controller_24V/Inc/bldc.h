@@ -24,7 +24,7 @@
 #define Phase4							4
 #define Phase5							5
 #define Phase6							1
-#define START							0
+#define RUN								0
 #define STOP							1
 #define CW								0
 #define CCW								1
@@ -35,8 +35,13 @@
 #define BLDC_SET_REFERENCE_DUTY(duty)			( DutyRef = (duty > 95) ? 95 : \
 															(duty < 0)  ? 0  : duty )
 
+#define BLDC_SET_REFERENCE_SPEED(_HANDLE_, speed)			( (_HANDLE_)->RefSpeed = speed )
 
-#define BLDC_FIND_OLD_HALLPHASE(_HANDLE_)		do{																								\
+
+#define BLDC_SET_OLD_HALLPHASE(_HANDLE_)		do{																								\
+																																				\
+														(_HANDLE_)->HallPhase = (READ_BIT(GPIOC->IDR, (_HANDLE_)->Init.GPIO_Pins_Hall)) >> 6U;	\
+																																				\
 														switch( (_HANDLE_)->HallPhase )															\
 														{																						\
 															case Phase1:																		\
@@ -83,8 +88,16 @@
 													}while(0)
 
 
+#define BLDC_PID_GAIN_SET(_HANDLE_, P_Gain, I_Gain, D_Gain)		do{									\
+																		(_HANDLE_)->Kp = P_Gain;	\
+																		(_HANDLE_)->Ki = I_Gain;	\
+																		(_HANDLE_)->Kd = D_Gain;	\
+																	}while(0)
+
+
 /* BLDC global variables */
-extern uint8_t DutyRef;
+
+
 
 
 /* BLDC Configuration structure */
@@ -149,9 +162,21 @@ typedef struct
 
 	int32_t					OldHallCount;
 
+	double					Speed;
+
+	double					RefSpeed;
+
 	double 					Position;
 
-	double					Speed;
+	double					RefPosition;
+
+	double					Kp;
+
+	double					Ki;
+
+	double					Kd;
+
+	double					PwmPID;
 
 } BLDC_HandleTypeDef;
 
@@ -170,6 +195,7 @@ void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt);
 
 void IR2101_Test1(uint16_t Top_time_us, uint16_t Low_time_us, uint16_t Dead_time_us);
 void IR2101_Test2(uint16_t Top_time_ms, uint16_t Low_time_ms, uint16_t Dead_time_ms);
