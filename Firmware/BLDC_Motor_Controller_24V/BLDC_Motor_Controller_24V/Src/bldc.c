@@ -10,9 +10,6 @@
 //#include "bldc.h"
 
 
-static double err = 0, errPrv = 0;
-static double P_term = 0, I_term = 0, D_term = 0;
-
 /**************************************************************************************************************
  * 																											  *
  * 											APIs supported by this driver									  *
@@ -99,7 +96,7 @@ void BLDC_Get_Speed(BLDC_HandleTypeDef *pBLDCHandle, double Ts)
 	deltaHallCount = pBLDCHandle->HallCount - pBLDCHandle->OldHallCount;
 	pBLDCHandle->OldHallCount = pBLDCHandle->HallCount;
 
-	pBLDCHandle->Speed = 60. * (double)deltaHallCount / (pBLDCHandle->MotorPoleNum * pBLDCHandle->MotorGearRatio * 3.) / Ts;
+	pBLDCHandle->CurSpeed = 60. * (double)deltaHallCount / (pBLDCHandle->MotorPoleNum * pBLDCHandle->MotorGearRatio * 3.) / Ts;
 }
 
 
@@ -147,7 +144,7 @@ void BLDC_Get_Position(BLDC_HandleTypeDef *pBLDCHandle)
 			break;
 	}
 
-	pBLDCHandle->Position = (pBLDCHandle->HallCount) * (pBLDCHandle->MotorResolution);
+	pBLDCHandle->CurPosition = (pBLDCHandle->HallCount) * (pBLDCHandle->MotorResolution);
 
 	pBLDCHandle->OldHallPhase = pBLDCHandle->HallPhase;
 }
@@ -209,6 +206,7 @@ void BLDC_Step1(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 }
 
+
 void BLDC_Step2(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. WT Logic On (PB2)
@@ -219,6 +217,7 @@ void BLDC_Step2(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 }
+
 
 void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle)
 {
@@ -231,6 +230,7 @@ void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 }
 
+
 void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. VT Logic On (PB1)
@@ -242,6 +242,7 @@ void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 }
 
+
 void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle)
 {
 	// 1. VT Logic On (PB1)
@@ -252,6 +253,7 @@ void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
 }
+
 
 void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle)
 {
@@ -265,19 +267,32 @@ void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle)
 }
 
 
+
+/**************************************************************************************************************
+ * 																											  *
+ * 										   BLDC APIs related to PID control									  *
+ * 										   																	  *
+ **************************************************************************************************************/
+
+void BLDC_CalculatePID(BLDC_HandleTypeDef *pBLDCHandle, double refValue, double curValue, double dt)
+{
+	pBLDCHandle->Error = refValue - curValue;
+
+	pBLDCHandle->P_term = pBLDCHandle->Kp * pBLDCHandle->Error;
+	pBLDCHandle->I_term += pBLDCHandle->Ki * pBLDCHandle->Error * dt;
+	pBLDCHandle->D_term = pBLDCHandle->Kd * (pBLDCHandle->Error - pBLDCHandle->PrvError) / dt;
+
+	pBLDCHandle->PwmPID = pBLDCHandle->P_term + pBLDCHandle->I_term + pBLDCHandle->D_term;
+
+	pBLDCHandle->PrvError = pBLDCHandle->Error;
+}
+
+
+
 void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 {
 	/* Get PWM duty cycle which is calculated by Error value and PID gain */
-
-	err = pBLDCHandle->RefSpeed - pBLDCHandle->Speed;
-
-	P_term = pBLDCHandle->Kp * err;
-	I_term += pBLDCHandle->Ki * err * dt;
-	D_term = pBLDCHandle->Kd * (err - errPrv);
-
-	pBLDCHandle->PwmPID = P_term + I_term + D_term;
-
-	errPrv = err;
+	BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->RefSpeed, pBLDCHandle->CurSpeed, dt);
 
 	/* Figure out Rotation direction */
 	if(pBLDCHandle->PwmPID >= 0)		pBLDCHandle->RotationDir = CW;
@@ -292,12 +307,140 @@ void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 }
 
 
+void BLDC_PositionPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
+{
+	/* Calculate Trajectory Position for given Reference position, Current position, Vmax, Acceleration values  */
+	BLDC_CalculateTrajectoryPosition(pBLDCHandle, dt);
 
-/****************************************************************************************/
-/*																						*/
-/*									 Test Functions										*/
-/*																						*/
-/****************************************************************************************/
+	/* Get PWM duty cycle which is calculated by Error value and PID gain */
+	BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->RefPosition, pBLDCHandle->CurPosition, dt);
+
+	/* Figure out Rotation direction */
+	if(pBLDCHandle->PwmPID >= 0)		pBLDCHandle->RotationDir = CW;
+	else if(pBLDCHandle->PwmPID < 0)	pBLDCHandle->RotationDir = CCW;
+
+	/* Saturate PWM duty if it exceeds the limit of PWM duty value */
+	uint16_t PwmPID_ABS = (uint16_t)(abs(pBLDCHandle->PwmPID));
+
+	if(PwmPID_ABS > 95)			PwmPID_ABS = 95;
+	else if(PwmPID_ABS < 5)		PwmPID_ABS = 5;
+
+
+	SetPwmDuty(pBLDCHandle, PwmPID_ABS);
+}
+
+
+void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt)
+{
+	double deltaRefPos;
+	double accelIntervalPos;
+	double remainingPos;
+	int rotationDir;
+	int accelDir;
+
+	/* Calculate the Total Reference Position value to Move */
+	deltaRefPos = pBLDCHandle->RefPosition - pBLDCHandle->PrvRefPosition;
+
+	/* Calculate the Position value to Move in Acceleration interval */
+	accelIntervalPos = (0.5) * (pBLDCHandle->TrjRefMaxSpeed * pBLDCHandle->TrjRefMaxSpeed) / pBLDCHandle->TrjRefAcceleration;
+
+	/* Calculate the Remaining Position value */
+	remainingPos = pBLDCHandle->RefPosition - pBLDCHandle->CurPosition;
+
+	/* Figure out the Direction to Rotate */
+	if(remainingPos >= 0)			rotationDir = CW;
+	else if(remainingPos < 0)		rotationDir = CCW;
+
+
+	/* When the Speed profile is Trapezoidal */
+	if( accelIntervalPos < (0.5 * deltaRefPos) )
+	{
+		if( (pBLDCHandle->CurPosition - pBLDCHandle->PrvRefPosition) < accelIntervalPos )			accelDir = 1;		// Motor is in Acceleration interval
+		else if( remainingPos > accelIntervalPos )													accelDir = 0;		// Motor is in Constant Velocity interval
+		else																						accelDir = -1;		// Motor is in Deceleration interval
+	}
+	/* When the Speed profile is Isosceles triangle */
+	else if( accelIntervalPos >= (0.5 * deltaRefPos) )
+	{
+		if( (pBLDCHandle->CurPosition - pBLDCHandle->PrvRefPosition) < (0.5 * deltaRefPos) )		accelDir = 1;
+		else																						accelDir = -1;
+	}
+
+
+	switch (accelDir)
+	{
+		case 1:
+		{
+			pBLDCHandle->TrjDtAcceleration = pBLDCHandle->TrjRefAcceleration * dt;
+			break;
+		}
+
+		case 0:
+		{
+			pBLDCHandle->TrjDtAcceleration = 0;
+			break;
+		}
+
+		case -1:
+		{
+			pBLDCHandle->TrjDtAcceleration = (-1) * pBLDCHandle->TrjRefAcceleration * dt;
+			break;
+		}
+
+		default :
+			break;
+	}
+
+
+	pBLDCHandle->TrjCurSpeed += pBLDCHandle->TrjDtAcceleration;
+
+
+	switch (rotationDir)
+	{
+		case CW:
+		{
+			if(pBLDCHandle->TrjCurPosition >= pBLDCHandle->RefPosition)
+			{
+				pBLDCHandle->TrjCurSpeed = 0;
+				pBLDCHandle->TrjDtAcceleration = 0;
+				pBLDCHandle->PrvRefPosition = pBLDCHandle->RefPosition;
+			}
+			else
+			{
+				pBLDCHandle->TrjCurPosition += (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+			}
+
+			break;
+		}
+
+		case CCW:
+		{
+			if(pBLDCHandle->TrjCurPosition <= pBLDCHandle->RefPosition)
+			{
+				pBLDCHandle->TrjCurSpeed = 0;
+				pBLDCHandle->TrjDtAcceleration = 0;
+				pBLDCHandle->PrvRefPosition = pBLDCHandle->RefPosition;
+			}
+			else
+			{
+				pBLDCHandle->TrjCurPosition += (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+			}
+
+			break;
+		}
+
+		default :
+			break;
+	}
+}
+
+
+
+/**************************************************************************************************************
+ * 																											  *
+ * 										  	   BLDC Test functions			 								  *
+ * 										   																	  *
+ **************************************************************************************************************/
 
 void IR2101_Test1(uint16_t Top_time_us, uint16_t Low_time_us, uint16_t Dead_time_us)
 {

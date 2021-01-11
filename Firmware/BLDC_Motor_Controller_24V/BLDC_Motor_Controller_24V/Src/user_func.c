@@ -17,7 +17,12 @@ DMA_HandleTypeDef		DMA1Handle;
 uint8_t ButtonFlag = FLAG_RESET;
 
 char MotorSpeedStr[6] = {0,};
+char MotorPositionStr[8] = {0,};
+char PwmPidStr[5] = {0,};
+char PwmPidAbsStr[4] = {0,};
+char Msg1[50] = {0,};
 
+uint8_t startFlag = FLAG_RESET;
 
 /********************************************************************************************************************
  * 																											  		*
@@ -45,20 +50,38 @@ void Button_Init(void)
 
 void BLDC1_Init(void)
 {
+	/* Initialize Motor Hardware related Parameter */
 	BLDC1Handle.Instance = BLDC1;
 	BLDC1Handle.MotorPoleNum = 8;
 	BLDC1Handle.MotorGearRatio = 4;
 	BLDC1Handle.MotorResolution = (double)360/6/(BLDC1Handle.MotorPoleNum/2)/4;
-	BLDC1Handle.MotorState = STOP;
+
+	/* Initialize Motor Control related Parameter*/
+	BLDC1Handle.MotorState = MOTOR_STATE_STOP;
 	BLDC1Handle.HallCount = 0;
 	BLDC1Handle.OldHallCount = 0;
-	BLDC1Handle.Position = 0;
-	BLDC1Handle.RefPosition = 0;
-	BLDC1Handle.Speed = 0;
+	BLDC1Handle.CurSpeed = 0;
 	BLDC1Handle.RefSpeed = 0;
+	BLDC1Handle.CurPosition = 0;
+	BLDC1Handle.RefPosition = 0;
+	BLDC1Handle.PrvRefPosition = 0;
+
+	/* Initialize Motor Position Trajectory related Parameter */
+	BLDC1Handle.TrjCurPosition = 0;
+	BLDC1Handle.TrjCurSpeed = 0;
+	BLDC1Handle.TrjRefMaxSpeed = 0;
+	BLDC1Handle.TrjRefAcceleration = 0;
+	BLDC1Handle.TrjDtAcceleration = 0;
+
+	/* Initialize Motor PID Control related Parameter */
 	BLDC1Handle.Kp = 0;
 	BLDC1Handle.Ki = 0;
 	BLDC1Handle.Kd = 0;
+	BLDC1Handle.Error = 0;
+	BLDC1Handle.PrvError = 0;
+	BLDC1Handle.P_term = 0;
+	BLDC1Handle.I_term = 0;
+	BLDC1Handle.D_term = 0;
 	BLDC1Handle.PwmPID = 0;
 
 	BLDC_Init(&BLDC1Handle);
@@ -89,7 +112,7 @@ void TIM6_Init(void)
 	TIM6Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	TIM6Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	TIM6Handle.Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
-	TIM6Handle.Init.Period = (500-1);	// 10kHz / 500 = 20Hz
+	TIM6Handle.Init.Period = (5-1);	// 10kHz / 5 = 2kHz
 	TIM6Handle.Init.RepetitionCounter = 0;
 	TIM_Base_Init(&TIM6Handle);
 
@@ -132,48 +155,87 @@ void DMA1_Interrupt_Configuration(void)
 
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
-	/* This Callback function is executed every 50ms by TIM6 */
+	/* This Callback function is executed every 0.5ms by TIM6 */
+
+	static int count = 0;
+	char sign;
+
+
+	/* Check the Button is pressed */
+	if(ButtonFlag == FLAG_RESET)
+	{
+		uint8_t buttonState;
+
+		buttonState = READ_BIT(GPIOA->IDR, GPIO_PIN_7);
+
+		if(buttonState == BUTTON_PRESSED)
+		{
+			ButtonFlag = FLAG_SET;
+		}
+	}
+
 
 	if(pTIMHandle->Instance == TIM6)
 	{
-		/* Check the Button is pressed */
-		if(ButtonFlag == FLAG_RESET)
+		/* Motor State is SPEED */
+		if(BLDC1Handle.MotorState == MOTOR_STATE_SPEED)
 		{
-			uint8_t buttonState;
-
-			buttonState = READ_BIT(GPIOA->IDR, GPIO_PIN_7);
-
-			if(buttonState == BUTTON_PRESSED)
+			if(count >= 100)
 			{
-				ButtonFlag = FLAG_SET;
+				/* Calculate the Current Speed of BLDC Motor */
+				BLDC_Get_Speed(&BLDC1Handle, 0.05);
+
+				/* Set PWM duty cycle by Speed PID calculation */
+				BLDC_SpeedPID(&BLDC1Handle, 0.05);
+
+				/* Transmit Motor Speed value to PC through UART2 */
+				int16_t motorSpeed, motorSpeedAbs;
+
+				motorSpeed = (int16_t)BLDC1Handle.CurSpeed;
+				motorSpeedAbs = abs(motorSpeed);
+
+				if(motorSpeed >= 0)			sign = '+';
+				else if(motorSpeed < 0)		sign = '-';
+
+				MotorSpeedStr[0] = sign;
+				MotorSpeedStr[1] = (motorSpeedAbs / 1000) + 48;
+				MotorSpeedStr[2] = ((motorSpeedAbs % 1000) / 100) + 48;
+				MotorSpeedStr[3] = ((motorSpeedAbs % 100) / 10) + 48;
+				MotorSpeedStr[4] = (motorSpeedAbs % 10) + 48;
+				MotorSpeedStr[5] = '\n';
+
+				UART_Transmit_DMA(&UART2Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
+
+				count = 0;
 			}
 		}
 
-		/* Calculate the Current Speed of BLDC Motor */
-		BLDC_Get_Speed(&BLDC1Handle, 0.05);
+		/* Motor State is POSITION */
+		else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION)
+		{
+			/* Set PWM duty cycle by Position PID calculation */
+			BLDC_PositionPID(&BLDC1Handle, 0.0005);
 
-		/* Set PWM duty cycle by PID calculation */
-		BLDC_SpeedPID(&BLDC1Handle, 0.05);
-
-		/* Transmit Motor Speed value to PC through UART2 */
-		int16_t motorSpeed, motorSpeedAbs;
-		uint8_t sign;
+			startFlag = FLAG_SET;
+		}
 
 
-		motorSpeed = (int16_t)BLDC1Handle.Speed;
-		motorSpeedAbs = abs(motorSpeed);
 
-		if(motorSpeed >= 0)			sign = '+';
-		else if(motorSpeed < 0)		sign = '-';
+		/* Transmit Motor Position value to PC through UART2 */
+		if(count >= 10)
+		{
+			if(BLDC1Handle.RotationDir == CW)			sign = '+';
+			else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
 
-		MotorSpeedStr[0] = sign;
-		MotorSpeedStr[1] = (motorSpeedAbs / 1000) + 48;
-		MotorSpeedStr[2] = ((motorSpeedAbs % 1000) / 100) + 48;
-		MotorSpeedStr[3] = ((motorSpeedAbs % 100) / 10) + 48;
-		MotorSpeedStr[4] = (motorSpeedAbs % 10) + 48;
-		MotorSpeedStr[5] = '\n';
+			sprintf(Msg1, "%lf, %lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
+			//sprintf(Msg1, "%lf, %lf, %lf, %lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition, BLDC1Handle.TrjDtAcceleration, BLDC1Handle.PwmPID);	// To see the case of TrjCurPosition
 
-		UART_Transmit_DMA(&UART2Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
+			UART_Transmit_DMA(&UART2Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
+
+			count = 0;
+		}
+
+		count++;
 	}
 }
 

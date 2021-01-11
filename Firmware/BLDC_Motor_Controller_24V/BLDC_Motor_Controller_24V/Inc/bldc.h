@@ -13,21 +13,22 @@
 
 
 /* BLDC Motor type */
-#define BLDC1							1
-#define BLDC2							2
+#define BLDC1									1
+#define BLDC2									2
 
 
 /* BLDC Macro definitions */
-#define Phase1							3
-#define Phase2							2
-#define Phase3							6
-#define Phase4							4
-#define Phase5							5
-#define Phase6							1
-#define RUN								0
-#define STOP							1
-#define CW								0
-#define CCW								1
+#define Phase1									3
+#define Phase2									2
+#define Phase3									6
+#define Phase4									4
+#define Phase5									5
+#define Phase6									1
+#define MOTOR_STATE_STOP						0
+#define MOTOR_STATE_SPEED						1
+#define MOTOR_STATE_POSITION					2
+#define CW										0
+#define CCW										1
 
 /* BLDC Macro functions */
 #define BLDC_SET_ROTATION_DIRECTION(_HANDLE_, dir)		( (_HANDLE_)->RotationDir = (dir == CW) ? CW : CCW )
@@ -140,6 +141,7 @@ typedef struct
 
 typedef struct
 {
+	/* Motor Hardware related Parameter */
 	uint8_t					Instance;
 
 	BLDC_InitTypeDef		Init;
@@ -150,6 +152,7 @@ typedef struct
 
 	double					MotorResolution;
 
+	/* Motor Control related Parameter*/
 	uint8_t 				MotorState;
 
 	uint8_t 				RotationDir;
@@ -162,19 +165,43 @@ typedef struct
 
 	int32_t					OldHallCount;
 
-	double					Speed;
+	double					CurSpeed;
 
-	double					RefSpeed;
+	double					RefSpeed;				// User configurable parameter
 
-	double 					Position;
+	double 					CurPosition;
 
-	double					RefPosition;
+	double					RefPosition;			// User configurable parameter
 
+	double					PrvRefPosition;
+
+	/* Motor Position Trajectory related Parameter */
+	double					TrjCurPosition;
+
+	double					TrjCurSpeed;
+
+	double					TrjRefMaxSpeed;			// User configurable parameter
+
+	double					TrjRefAcceleration;		// User configurable parameter
+
+	double					TrjDtAcceleration;
+
+	/* Motor PID Control related Parameter */
 	double					Kp;
 
 	double					Ki;
 
 	double					Kd;
+
+	double					Error;
+
+	double					PrvError;
+
+	double					P_term;
+
+	double					I_term;
+
+	double					D_term;
 
 	double					PwmPID;
 
@@ -195,7 +222,10 @@ void BLDC_Step3(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step4(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step5(BLDC_HandleTypeDef *pBLDCHandle);
 void BLDC_Step6(BLDC_HandleTypeDef *pBLDCHandle);
+void BLDC_CalculatePID(BLDC_HandleTypeDef *pBLDCHandle, double refValue, double curValue, double dt);
 void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt);
+void BLDC_PositionPID(BLDC_HandleTypeDef *pBLDCHandle, double dt);
+void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt);
 
 void IR2101_Test1(uint16_t Top_time_us, uint16_t Low_time_us, uint16_t Dead_time_us);
 void IR2101_Test2(uint16_t Top_time_ms, uint16_t Low_time_ms, uint16_t Dead_time_ms);

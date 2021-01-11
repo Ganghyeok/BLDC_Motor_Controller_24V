@@ -33,6 +33,11 @@ extern UART_HandleTypeDef UART2Handle;
 extern DMA_HandleTypeDef DMA1Handle;
 extern uint8_t ButtonFlag;
 extern char MotorSpeedStr[6];
+extern char MotorPositionStr[8];
+extern char PwmPidStr[5];
+extern char PwmPidAbsStr[4];
+extern char Msg1[50];
+extern uint8_t startFlag;
 
 
 /* Extern Initialization functions */
