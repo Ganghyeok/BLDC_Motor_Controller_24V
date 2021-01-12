@@ -310,23 +310,29 @@ void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 void BLDC_PositionPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 {
 	/* Calculate Trajectory Position for given Reference position, Current position, Vmax, Acceleration values  */
-	BLDC_CalculateTrajectoryPosition(pBLDCHandle, dt);
+	//BLDC_CalculateTrajectoryPosition(pBLDCHandle, dt);
 
 	/* Get PWM duty cycle which is calculated by Error value and PID gain */
 	BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->RefPosition, pBLDCHandle->CurPosition, dt);
 
-	/* Figure out Rotation direction */
-	if(pBLDCHandle->PwmPID >= 0)		pBLDCHandle->RotationDir = CW;
-	else if(pBLDCHandle->PwmPID < 0)	pBLDCHandle->RotationDir = CCW;
+	static double pidLimit = 3600.;
 
-	/* Saturate PWM duty if it exceeds the limit of PWM duty value */
-	uint16_t PwmPID_ABS = (uint16_t)(abs(pBLDCHandle->PwmPID));
+	/* Limit the PID control output */
+	if(pBLDCHandle->PwmPID > pidLimit)					pBLDCHandle->PwmPID = pidLimit;
+	else if(pBLDCHandle->PwmPID < (-1)*pidLimit)		pBLDCHandle->PwmPID = (-1)*pidLimit;
 
-	if(PwmPID_ABS > 95)			PwmPID_ABS = 95;
-	else if(PwmPID_ABS < 5)		PwmPID_ABS = 5;
+	if(pBLDCHandle->PwmPID >= 0)
+	{
+		pBLDCHandle->RotationDir = CW;
 
+		SetPwmDuty(pBLDCHandle, (uint16_t)(pBLDCHandle->PwmPID));	// 5% 여유 필요한가
+	}
+	else if(pBLDCHandle->PwmPID < 0)
+	{
+		pBLDCHandle->RotationDir = CCW;
 
-	SetPwmDuty(pBLDCHandle, PwmPID_ABS);
+		SetPwmDuty(pBLDCHandle, (uint16_t)((-1) * pBLDCHandle->PwmPID));
+	}
 }
 
 

@@ -220,8 +220,8 @@ void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle)
 		pBLDCHandle->Init.TIM_Handle->Instance = TIM4;
 		pBLDCHandle->Init.TIM_Handle->Init.CounterMode = TIM_COUNTERMODE_UP;
 		pBLDCHandle->Init.TIM_Handle->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		pBLDCHandle->Init.TIM_Handle->Init.Prescaler = (36-1);		//   72MHz / 36 = 2MHz
-		pBLDCHandle->Init.TIM_Handle->Init.Period = (100-1);		//   2MHz / 100 = 20kHz
+		pBLDCHandle->Init.TIM_Handle->Init.Prescaler = (1-1);	// 72MHz / 1 = 72MHz
+		pBLDCHandle->Init.TIM_Handle->Init.Period = (3600-1);	// 72MHz / 3600 = 20kHz
 		TIM_PWM_Init(pBLDCHandle->Init.TIM_Handle);
 
 		TIM_OC_InitTypeDef TIM4_PWMConfig;

@@ -54,9 +54,9 @@ int main(void)
 	 * 		Timer PWM channels : Disabled
 	 */
 
-
 	while(1)
 	{
+
 		if(ButtonFlag == FLAG_SET)
 		{
 			/* Button is pressed */
@@ -77,11 +77,11 @@ int main(void)
 				BLDC_BootstrapCap_Charge(&BLDC1Handle);
 
 				// 4. Set Reference Position, PID gain, etc
-				BLDC1Handle.RefPosition = 360;
-				BLDC1Handle.TrjRefMaxSpeed = 32000;
-				BLDC1Handle.TrjRefAcceleration = 50;
+				BLDC1Handle.RefPosition = 18000;
+				//BLDC1Handle.TrjRefMaxSpeed = 32000;
+				//BLDC1Handle.TrjRefAcceleration = 50;
 
-				BLDC_PID_GAIN_SET(&BLDC1Handle, 0.2, 0, 0.0001);	// 180 deg well -> P : 0.18, I : 0, D : 0
+				BLDC_PID_GAIN_SET(&BLDC1Handle, 21, 0, 0.2);
 
 				// 5. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_POSITION
 				BLDC1Handle.MotorState = MOTOR_STATE_POSITION;
@@ -95,7 +95,7 @@ int main(void)
 			{
 				/* Previous Motor state was MOTOR_STATE_POSITION */
 
-				Delay_ms(500);
+				Delay_ms(100);
 
 				// 3. Change MotorState from MOTOR_STATE_POSITION to MOTOR_STATE_STOP
 				BLDC1Handle.MotorState = MOTOR_STATE_STOP;

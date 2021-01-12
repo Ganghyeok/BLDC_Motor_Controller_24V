@@ -112,7 +112,7 @@ void TIM6_Init(void)
 	TIM6Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	TIM6Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	TIM6Handle.Init.Prescaler = (7200-1);	// 72MHz / 7200 = 10kHz
-	TIM6Handle.Init.Period = (5-1);	// 10kHz / 5 = 2kHz
+	TIM6Handle.Init.Period = (10-1);	// 10kHz / 10 = 1kHz
 	TIM6Handle.Init.RepetitionCounter = 0;
 	TIM_Base_Init(&TIM6Handle);
 
@@ -155,7 +155,7 @@ void DMA1_Interrupt_Configuration(void)
 
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
-	/* This Callback function is executed every 0.5ms by TIM6 */
+	/* This Callback function is executed every 1ms by TIM6 */
 
 	static int count = 0;
 	char sign;
@@ -174,7 +174,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 		}
 	}
 
-
+	/* TIM6 */
 	if(pTIMHandle->Instance == TIM6)
 	{
 		/* Motor State is SPEED */
@@ -183,10 +183,10 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 			if(count >= 100)
 			{
 				/* Calculate the Current Speed of BLDC Motor */
-				BLDC_Get_Speed(&BLDC1Handle, 0.05);
+				BLDC_Get_Speed(&BLDC1Handle, 0.1);
 
 				/* Set PWM duty cycle by Speed PID calculation */
-				BLDC_SpeedPID(&BLDC1Handle, 0.05);
+				BLDC_SpeedPID(&BLDC1Handle, 0.1);
 
 				/* Transmit Motor Speed value to PC through UART2 */
 				int16_t motorSpeed, motorSpeedAbs;
@@ -214,7 +214,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 		else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION)
 		{
 			/* Set PWM duty cycle by Position PID calculation */
-			BLDC_PositionPID(&BLDC1Handle, 0.0005);
+			BLDC_PositionPID(&BLDC1Handle, 0.001);
 
 			startFlag = FLAG_SET;
 		}
@@ -222,12 +222,12 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 
 		/* Transmit Motor Position value to PC through UART2 */
-		if(count >= 10)
+		if(count >= 2)		// Every 2ms
 		{
 			if(BLDC1Handle.RotationDir == CW)			sign = '+';
 			else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
 
-			sprintf(Msg1, "%lf, %lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
+			sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
 			//sprintf(Msg1, "%lf, %lf, %lf, %lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition, BLDC1Handle.TrjDtAcceleration, BLDC1Handle.PwmPID);	// To see the case of TrjCurPosition
 
 			UART_Transmit_DMA(&UART2Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
