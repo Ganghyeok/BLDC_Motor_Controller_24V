@@ -77,11 +77,11 @@ int main(void)
 				BLDC_BootstrapCap_Charge(&BLDC1Handle);
 
 				// 4. Set Reference Position, PID gain, etc
-				BLDC1Handle.RefPosition = 18000;
-				//BLDC1Handle.TrjRefMaxSpeed = 32000;
-				//BLDC1Handle.TrjRefAcceleration = 50;
+				BLDC1Handle.RefPosition = 360;
+				BLDC1Handle.TrjRefMaxSpeed = 7500;
+				BLDC1Handle.TrjRefAcceleration = 800;
 
-				BLDC_PID_GAIN_SET(&BLDC1Handle, 21, 0, 0.2);
+				BLDC_PID_GAIN_SET(&BLDC1Handle, 33, 4, 0);
 
 				// 5. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_POSITION
 				BLDC1Handle.MotorState = MOTOR_STATE_POSITION;

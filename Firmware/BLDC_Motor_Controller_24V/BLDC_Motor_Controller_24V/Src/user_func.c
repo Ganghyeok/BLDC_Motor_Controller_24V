@@ -227,8 +227,8 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 			if(BLDC1Handle.RotationDir == CW)			sign = '+';
 			else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
 
-			sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
-			//sprintf(Msg1, "%lf, %lf, %lf, %lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition, BLDC1Handle.TrjDtAcceleration, BLDC1Handle.PwmPID);	// To see the case of TrjCurPosition
+			//sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
+			sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);	// To see the case of TrjCurPosition
 
 			UART_Transmit_DMA(&UART2Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
 
