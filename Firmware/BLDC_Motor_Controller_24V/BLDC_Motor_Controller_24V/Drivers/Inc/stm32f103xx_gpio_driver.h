@@ -160,8 +160,22 @@ typedef struct
                                                           AFIO->MAPR = tmpreg;          \
                                                           }while(0u)
 
+#define AFIO_DBGAFR_CONFIG(DBGAFR_SWJCFG)  do{ uint32_t tmpreg = AFIO->MAPR;     \
+                                               tmpreg &= ~AFIO_MAPR_SWJ_CFG_Msk; \
+                                               tmpreg |= DBGAFR_SWJCFG;          \
+                                               AFIO->MAPR = tmpreg;              \
+                                               }while(0u)
+
+
 #define AFIO_REMAP_TIM3_ENABLE()  AFIO_REMAP_PARTIAL(AFIO_MAPR_TIM3_REMAP_FULLREMAP, AFIO_MAPR_TIM3_REMAP_FULLREMAP)
 
+
+/**
+  * @brief Enable the Serial wire JTAG configuration
+  * @note  NOJTAG: JTAG-DP Disabled and SW-DP Enabled
+  * @retval None
+  */
+#define AFIO_REMAP_SWJ_NOJTAG()  AFIO_DBGAFR_CONFIG(AFIO_MAPR_SWJ_CFG_JTAGDISABLE)
 
 /**************************************************************************************************************
  * 																											  *
@@ -179,6 +193,7 @@ uint8_t GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState);
 void GPIO_ModifyPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_To_Set, uint16_t GPIO_Pin_To_Reset);
 void GPIO_WritePort(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState);
+void GPIO_WriteData(GPIO_TypeDef *GPIOx, uint16_t Data);
 void GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void EXTI_IRQHandling(uint32_t GPIO_Pin);
 void EXTI_Callback(uint32_t GPIO_Pin);

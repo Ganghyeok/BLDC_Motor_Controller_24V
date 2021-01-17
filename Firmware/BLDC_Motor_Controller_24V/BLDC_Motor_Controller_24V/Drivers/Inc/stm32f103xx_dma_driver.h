@@ -45,7 +45,7 @@ typedef struct
 
 
 /**
-  * @brief  DMA handle Structure definition
+  * @brief  DMA Handle Structure definition
   */
 typedef struct __DMA_HandleTypeDef
 {

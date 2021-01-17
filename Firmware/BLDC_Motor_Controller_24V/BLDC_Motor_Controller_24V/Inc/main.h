@@ -8,9 +8,12 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#include <ts.h>
 #include "stm32f103xx.h"
 #include "common.h"
 #include "bldc.h"
+#include "tft.h"
+#include "ts.h"
 
 
 /* Application Specific Macro functions */
@@ -31,6 +34,9 @@ extern TIM_HandleTypeDef TIM4Handle;
 extern BLDC_HandleTypeDef BLDC1Handle;
 extern UART_HandleTypeDef UART2Handle;
 extern DMA_HandleTypeDef DMA1Handle;
+extern TFT_HandleTypeDef TFT1Handle;
+extern TS_HandleTypeDef	TS1Handle;
+extern SPI_HandleTypeDef SPI2Handle;
 extern uint8_t ButtonFlag;
 extern char MotorSpeedStr[6];
 extern char MotorPositionStr[8];
@@ -47,6 +53,9 @@ extern void UART2_Init(void);
 extern void TIM6_Init(void);
 extern void DMA1_Init(void);
 extern void DMA1_Interrupt_Configuration(void);
+extern void TFT1_Init(void);
+extern void TS1_Init(void);
+extern void Test_Init(void);
 
 
 /* Extern Callback functions */

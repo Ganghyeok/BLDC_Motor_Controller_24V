@@ -13,8 +13,13 @@ TIM_HandleTypeDef 		TIM4Handle;
 BLDC_HandleTypeDef 		BLDC1Handle;
 UART_HandleTypeDef 		UART2Handle;
 DMA_HandleTypeDef		DMA1Handle;
+TFT_HandleTypeDef		TFT1Handle;
+TS_HandleTypeDef		TS1Handle;
+SPI_HandleTypeDef		SPI2Handle;
+
 
 uint8_t ButtonFlag = FLAG_RESET;
+
 
 char MotorSpeedStr[6] = {0,};
 char MotorPositionStr[8] = {0,};
@@ -23,6 +28,7 @@ char PwmPidAbsStr[4] = {0,};
 char Msg1[50] = {0,};
 
 uint8_t startFlag = FLAG_RESET;
+
 
 /********************************************************************************************************************
  * 																											  		*
@@ -149,6 +155,54 @@ void DMA1_Interrupt_Configuration(void)
 }
 
 
+void TFT1_Init(void)
+{
+	TFT1Handle.Instance = TFT1;
+	TFT1Handle.ScreenMode = 'L';
+	TFT1Handle.XcharacterLimit = 40;
+	TFT1Handle.YcharacterLimit = 30;
+	TFT1Handle.cursor_flag = 0;
+	TFT1Handle.underscore_flag = 0;
+	TFT1Handle.outline_flag = 0;
+	TFT1Handle.Kfont_type = 'M';
+
+	TFT_Init(&TFT1Handle);
+}
+
+
+void TS1_Init(void)
+{
+	TS1Handle.Instance = TS1;
+	TS1Handle.x_12bit = 0;
+	TS1Handle.y_12bit = 0;
+	TS1Handle.x_touch = 0;
+	TS1Handle.y_touch = 0;
+	TS1Handle.Init.x_touch_min = 250;
+	TS1Handle.Init.x_touch_max = 3700;
+	TS1Handle.Init.y_touch_min = 350;
+	TS1Handle.Init.y_touch_max = 3750;
+	TS1Handle.Init.ADS7846_CMD_X = 0x00D0;
+	TS1Handle.Init.ADS7846_CMD_Y = 0x0090;
+
+	TS_Init(&TS1Handle);
+}
+
+
+void Test_Init(void)
+{
+	GPIO_InitTypeDef DebugLed;
+
+	memset(&DebugLed,0, sizeof(DebugLed));
+
+	DebugLed.Pin = GPIO_PIN_5;
+	DebugLed.Mode = GPIO_MODE_OUTPUT_PP;
+	DebugLed.Pull = GPIO_NOPULL;
+	DebugLed.Speed = GPIO_SPEED_FREQ_MEDIUM;
+
+	GPIO_Init(GPIOA, &DebugLed);
+}
+
+
 /********************************************************************************************************************
  *												  Callback Function													*
  ********************************************************************************************************************/
@@ -268,6 +322,7 @@ void MemsetHandleStructure(void)
 	memset(&BLDC1Handle, 0, sizeof(BLDC1Handle));
 	memset(&UART2Handle, 0, sizeof(UART2Handle));
 	memset(&DMA1Handle, 0, sizeof(DMA1Handle));
+	memset(&TFT1Handle, 0, sizeof(TFT1Handle));
 }
 
 

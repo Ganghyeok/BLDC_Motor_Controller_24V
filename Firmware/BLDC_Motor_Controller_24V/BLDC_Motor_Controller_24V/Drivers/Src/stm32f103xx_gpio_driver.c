@@ -227,6 +227,12 @@ void GPIO_WritePort(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t PinState)
 }
 
 
+void GPIO_WriteData(GPIO_TypeDef *GPIOx, uint16_t Data)
+{
+	GPIOx->ODR = (uint16_t)Data;
+}
+
+
 void GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
 	if( (GPIOx->ODR & GPIO_Pin) )
