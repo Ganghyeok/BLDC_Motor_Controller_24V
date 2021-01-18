@@ -254,10 +254,10 @@ void TFT_MspInit(TFT_HandleTypeDef *pTFTHandle)
 
 		// 1. Initialize GPIO for Control Pins (nRST, nCS, RS, nWR) to GPIO Output Push-Pull mode
 		pTFTHandle->Init.GPIOx_TFT_Control = GPIOA;
-		pTFTHandle->Init.GPIO_Pin_TFT_nRST = GPIO_PIN_0;
-		pTFTHandle->Init.GPIO_Pin_TFT_nCS = GPIO_PIN_1;
-		pTFTHandle->Init.GPIO_Pin_TFT_RS = GPIO_PIN_2;
-		pTFTHandle->Init.GPIO_Pin_TFT_nWR = GPIO_PIN_3;
+		pTFTHandle->Init.GPIO_Pin_TFT_nRST = GPIO_PIN_8;
+		pTFTHandle->Init.GPIO_Pin_TFT_nCS = GPIO_PIN_9;
+		pTFTHandle->Init.GPIO_Pin_TFT_RS = GPIO_PIN_10;
+		pTFTHandle->Init.GPIO_Pin_TFT_nWR = GPIO_PIN_11;
 		pTFTHandle->Init.GPIO_Pins_TFT_Control = pTFTHandle->Init.GPIO_Pin_TFT_nRST | pTFTHandle->Init.GPIO_Pin_TFT_nCS | pTFTHandle->Init.GPIO_Pin_TFT_RS | pTFTHandle->Init.GPIO_Pin_TFT_nWR;
 
 		GPIOInit.Pin = pTFTHandle->Init.GPIO_Pins_TFT_Control;
