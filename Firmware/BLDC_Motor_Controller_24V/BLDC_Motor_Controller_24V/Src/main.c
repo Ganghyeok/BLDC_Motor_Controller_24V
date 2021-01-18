@@ -33,32 +33,26 @@ int main(void)
 	RCC_AFIO_CLK_ENABLE();
 	AFIO_REMAP_SWJ_NOJTAG();
 
-	//TFT1_Init();
+	TFT1_Init();
 	TS1_Init();
 	SPI_ENABLE(&SPI2Handle);
+	Delay_ms(100);
 
-	Delay_ms(1000);
 
-
-//	TFT_Color_Screen(&TFT1Handle, Black);
-//
-//	TFT_Landscape_mode(&TFT1Handle);
-//
-//	TFT_String(&TFT1Handle, 6, 2, White, Black, (uint8_t *)"Hello World!");
-//	TFT_String(&TFT1Handle, 25, 2, White, Black, (uint8_t *)"Nice to meet you!");
-
-//	Test_Init();
-
+	/* User Code Start */
 	TFT1Handle.foreground = White;
 	TFT1Handle.background = Black;
 
-	uint16_t x_data;
-
 	while(1)
 	{
-		x_data = TS_Read_ADS7846(0x00D0);
+		TS_Input(&TS1Handle);
 
-		Delay_ms(10);
+		TFT_xy(&TFT1Handle, 10, 10);
+		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.x_touch, 0, 5);
+		TFT_xy(&TFT1Handle, 18, 10);
+		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.y_touch, 0, 5);
+
+		Delay_ms(100);
 	}
 }
 

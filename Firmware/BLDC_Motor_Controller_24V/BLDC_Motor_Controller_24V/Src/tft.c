@@ -995,9 +995,47 @@ void TFT_Sine(TFT_HandleTypeDef *pTFTHandle, int16_t peak, uint8_t mode, uint16_
 }
 
 
-void TFT_Draw_axis(void)
+void TFT_Draw_axis(TFT_HandleTypeDef *pTFTHandle)
 {
+	TFT_String(pTFTHandle, 15, 0, White, Blue, " Data Graph ");
 
+	TFT_Line(pTFTHandle, 15, 215, 310, 215, White);
+	TFT_Line(pTFTHandle, 305, 210, 310, 215, White);
+	TFT_Line(pTFTHandle, 305, 220, 310, 215, White);
+	TFT_Line(pTFTHandle, 70, 212, 70, 218, White);
+	TFT_Line(pTFTHandle, 120, 212, 120, 218, White);
+	TFT_Line(pTFTHandle, 170, 212, 170, 218, White);
+	TFT_Line(pTFTHandle, 220, 212, 220, 218, White);
+	TFT_Line(pTFTHandle, 270, 212, 270, 218, White);
+	TFT_Color(pTFTHandle, Cyan, Black);
+	TFT_English_pixel(pTFTHandle, 16, 222, '0');
+	TFT_English_pixel(pTFTHandle, 66, 222, '1');
+	TFT_English_pixel(pTFTHandle, 116, 222, '2');
+	TFT_English_pixel(pTFTHandle, 166, 222, '3');
+	TFT_English_pixel(pTFTHandle, 216, 222, '4');
+	TFT_English_pixel(pTFTHandle, 266, 222, '5');
+	TFT_Color(pTFTHandle, Magenta, Black);
+	TFT_English_pixel(pTFTHandle, 288, 222, '[');
+	TFT_English_pixel(pTFTHandle, 296, 222, 's');
+	TFT_English_pixel(pTFTHandle, 304, 222, ']');
+
+	TFT_Line(pTFTHandle, 20, 220, 20, 5, White);
+	TFT_Line(pTFTHandle, 15, 10, 20, 5, White);
+	TFT_Line(pTFTHandle, 25, 10, 20, 5, White);
+	TFT_Line(pTFTHandle, 17, 165, 23, 165, White);
+	TFT_Line(pTFTHandle, 17, 115, 23, 115, White);
+	TFT_Line(pTFTHandle, 17, 65, 23, 65, White);
+	TFT_Line(pTFTHandle, 17, 15, 23, 15, White);
+	TFT_Color(pTFTHandle, Cyan, Black);
+	TFT_English_pixel(pTFTHandle, 5, 208, '0');
+	TFT_English_pixel(pTFTHandle, 5, 158, '1');
+	TFT_English_pixel(pTFTHandle, 5, 108, '2');
+	TFT_English_pixel(pTFTHandle, 5, 58, '3');
+	TFT_English_pixel(pTFTHandle, 5, 8, '4');
+	TFT_Color(pTFTHandle, Magenta, Black);
+	TFT_English_pixel(pTFTHandle, 28, 8, '[');
+	TFT_English_pixel(pTFTHandle, 36, 8, 'V');
+	TFT_English_pixel(pTFTHandle, 44, 8, ']');
 }
 
 
