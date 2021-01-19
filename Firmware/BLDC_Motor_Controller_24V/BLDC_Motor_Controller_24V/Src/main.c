@@ -30,12 +30,18 @@ int main(void)
 	// 2. Clear All members of Handle structures to 0
 	MemsetHandleStructure();
 
+	RCC_AFIO_CLK_ENABLE();
+	AFIO_REMAP_SWJ_NOJTAG();
+
 	// 3. Initialize peripherals
 	DMA1_Init();				// Initialize DMA1
 	Button_Init();				// Initialize peripherals related to Button
 	BLDC1_Init();				// Initialize peripherals related to BLDC motor
 	UART3_Init();				// Initialize UART2 to transmit data to PC
 	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
+	TFT1_Init();
+	TS1_Init();
+	SPI_ENABLE(&SPI2Handle);
 	Delay_ms(10);
 
 	// 4. Start PWM for UB, VB, WB
@@ -54,8 +60,20 @@ int main(void)
 	 * 		Timer PWM channels : Disabled
 	 */
 
+	TFT1Handle.foreground = White;
+	TFT1Handle.background = Black;
+
+
 	while(1)
 	{
+		TS_Input(&TS1Handle);
+
+		TFT_xy(&TFT1Handle, 10, 10);
+		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.x_touch, 0, 5);
+		TFT_xy(&TFT1Handle, 18, 10);
+		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.y_touch, 0, 5);
+
+		Delay_ms(10);
 
 		if(ButtonFlag == FLAG_SET)
 		{

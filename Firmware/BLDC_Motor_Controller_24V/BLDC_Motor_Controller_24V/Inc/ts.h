@@ -88,4 +88,5 @@ void TS_MspInit(TS_HandleTypeDef *pTSHandle);
 uint16_t TS_Read_ADS7846(uint16_t command);
 void TS_Input(TS_HandleTypeDef *pTSHandle);
 
+
 #endif /* TS_H_ */

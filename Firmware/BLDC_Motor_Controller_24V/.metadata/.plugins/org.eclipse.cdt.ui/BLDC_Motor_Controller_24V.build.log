@@ -1,20 +1,10 @@
-12:11:59 **** Incremental Build of configuration Debug for project BLDC_Motor_Controller_24V ****
+23:05:15 **** Incremental Build of configuration Debug for project BLDC_Motor_Controller_24V ****
 make -j8 all 
-arm-none-eabi-gcc "../Src/main.c" -mcpu=cortex-m3 -std=gnu11 -g3 -DSTM32F103RCTx -DSTM32 -DSTM32F1 -DDEBUG -c -I../Inc -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Src" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Inc" -I"C:/Users/rkdgu/Documents/Projects/24V BLDC Motor Controller/Firmware/BLDC_Motor_Controller_24V/BLDC_Motor_Controller_24V/Drivers/Src" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/main.d" -MT"Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/main.o"
-arm-none-eabi-gcc -o "BLDC_Motor_Controller_24V.elf" @"objects.list"   -mcpu=cortex-m3 -T"C:\Users\rkdgu\Documents\Projects\24V BLDC Motor Controller\Firmware\BLDC_Motor_Controller_24V\BLDC_Motor_Controller_24V\STM32F103RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_Motor_Controller_24V.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: BLDC_Motor_Controller_24V.elf
- 
-arm-none-eabi-objdump -h -S  BLDC_Motor_Controller_24V.elf  > "BLDC_Motor_Controller_24V.list"
-arm-none-eabi-objcopy  -O binary  BLDC_Motor_Controller_24V.elf  "BLDC_Motor_Controller_24V.bin"
 arm-none-eabi-size   BLDC_Motor_Controller_24V.elf 
    text	   data	    bss	    dec	    hex	filename
-  27924	    480	   2296	  30700	   77ec	BLDC_Motor_Controller_24V.elf
+  35652	    480	   2296	  38428	   961c	BLDC_Motor_Controller_24V.elf
 Finished building: default.size.stdout
  
-Finished building: BLDC_Motor_Controller_24V.bin
- 
-Finished building: BLDC_Motor_Controller_24V.list
- 
 
-12:12:03 Build Finished. 0 errors, 0 warnings. (took 4s.512ms)
+23:05:18 Build Finished. 0 errors, 0 warnings. (took 2s.549ms)
 

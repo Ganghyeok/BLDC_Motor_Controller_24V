@@ -20,15 +20,18 @@ void EXTI9_5_IRQHandler(void)
 }
 
 
-void EXTI0_IRQHandler(void)
-{
-//	EXTI->PR |= GPIO_PIN_0;
-//
-//	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
-}
-
-
 void DMA1_Channel2_IRQHandler(void)
 {
 	DMA_IRQ_Handling(UART3Handle.hdmatx);
 }
+
+
+//void EXTI0_IRQHandler(void)
+//{
+//	EXTI->PR |= GPIO_PIN_0;
+//
+//	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+//}
+
+
+

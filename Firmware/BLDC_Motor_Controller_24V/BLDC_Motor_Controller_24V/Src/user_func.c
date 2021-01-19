@@ -8,26 +8,21 @@
 #include "main.h"
 
 
-TIM_HandleTypeDef 		TIM6Handle;
-TIM_HandleTypeDef 		TIM4Handle;
-BLDC_HandleTypeDef 		BLDC1Handle;
-UART_HandleTypeDef 		UART3Handle;
-DMA_HandleTypeDef		DMA1Handle;
-TFT_HandleTypeDef		TFT1Handle;
-TS_HandleTypeDef		TS1Handle;
-SPI_HandleTypeDef		SPI2Handle;
-
+TIM_HandleTypeDef 			TIM6Handle;
+TIM_HandleTypeDef 			TIM4Handle;
+BLDC_HandleTypeDef 			BLDC1Handle;
+UART_HandleTypeDef 			UART3Handle;
+DMA_HandleTypeDef			DMA1Handle;
+TFT_HandleTypeDef			TFT1Handle;
+TS_HandleTypeDef			TS1Handle;
+SPI_HandleTypeDef			SPI2Handle;
 
 uint8_t ButtonFlag = FLAG_RESET;
-
+uint8_t startFlag = FLAG_RESET;
 
 char MotorSpeedStr[6] = {0,};
 char MotorPositionStr[8] = {0,};
-char PwmPidStr[5] = {0,};
-char PwmPidAbsStr[4] = {0,};
 char Msg1[50] = {0,};
-
-uint8_t startFlag = FLAG_RESET;
 
 
 /********************************************************************************************************************
@@ -136,21 +131,6 @@ void DMA1_Init(void)
 	RCC_DMA1_CLK_ENABLE();
 
 	// 2. Configure the NVIC of DMA1 channel7
-	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL2, NVIC_PRIOR_15, ENABLE);
-}
-
-
-void DMA1_Interrupt_Configuration(void)
-{
-	// 1. Enable Half-transfer interrupt
-	//DMA1_Channel2->CCR |= (0x1 << 2);
-
-	// 2. Enable Transfer complete interrupt
-	DMA1_Channel2->CCR |= (0x1 << 1);
-
-	// 3. Enable Transfer error interrupt
-	DMA1_Channel2->CCR |= (0x1 << 3);
-
 	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL2, NVIC_PRIOR_15, ENABLE);
 }
 

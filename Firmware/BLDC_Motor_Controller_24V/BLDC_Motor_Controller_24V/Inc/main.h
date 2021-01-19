@@ -28,21 +28,19 @@
 #define IS_IT_TE()								(DMA1->ISR & (0x1 << 27))
 
 /* Extern Global variables */
-extern TIM_HandleTypeDef TIM6Handle;
-extern TIM_HandleTypeDef TIM4Handle;
-extern BLDC_HandleTypeDef BLDC1Handle;
-extern UART_HandleTypeDef UART3Handle;
-extern DMA_HandleTypeDef DMA1Handle;
-extern TFT_HandleTypeDef TFT1Handle;
-extern TS_HandleTypeDef	TS1Handle;
-extern SPI_HandleTypeDef SPI2Handle;
-extern uint8_t ButtonFlag;
-extern char MotorSpeedStr[6];
-extern char MotorPositionStr[8];
-extern char PwmPidStr[5];
-extern char PwmPidAbsStr[4];
-extern char Msg1[50];
-extern uint8_t startFlag;
+extern TIM_HandleTypeDef 						TIM6Handle;
+extern TIM_HandleTypeDef 						TIM4Handle;
+extern BLDC_HandleTypeDef 						BLDC1Handle;
+extern UART_HandleTypeDef 						UART3Handle;
+extern DMA_HandleTypeDef 						DMA1Handle;
+extern TFT_HandleTypeDef 						TFT1Handle;
+extern TS_HandleTypeDef							TS1Handle;
+extern SPI_HandleTypeDef 						SPI2Handle;
+extern uint8_t 									ButtonFlag;
+extern uint8_t 									startFlag;
+extern char 									MotorSpeedStr[6];
+extern char 									MotorPositionStr[8];
+extern char 									Msg1[50];
 
 
 /* Extern Initialization functions */
@@ -51,7 +49,6 @@ extern void BLDC1_Init(void);
 extern void UART3_Init(void);
 extern void TIM6_Init(void);
 extern void DMA1_Init(void);
-extern void DMA1_Interrupt_Configuration(void);
 extern void TFT1_Init(void);
 extern void TS1_Init(void);
 extern void Test_Init(void);
