@@ -28,7 +28,7 @@ void EXTI0_IRQHandler(void)
 }
 
 
-void DMA1_Channel7_IRQHandler(void)
+void DMA1_Channel2_IRQHandler(void)
 {
-	DMA_IRQ_Handling(UART2Handle.hdmatx);
+	DMA_IRQ_Handling(UART3Handle.hdmatx);
 }

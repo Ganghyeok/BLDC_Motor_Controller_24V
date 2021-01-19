@@ -420,7 +420,15 @@ void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt
 			}
 			else
 			{
-				pBLDCHandle->TrjCurPosition += (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+				double dtTrjPosition;
+
+				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+
+				if(dtTrjPosition >= 0)
+				{
+					pBLDCHandle->TrjCurPosition += dtTrjPosition;
+				}
+
 			}
 
 			break;

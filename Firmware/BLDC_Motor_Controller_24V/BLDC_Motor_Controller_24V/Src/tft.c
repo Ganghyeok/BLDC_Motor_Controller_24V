@@ -997,7 +997,7 @@ void TFT_Sine(TFT_HandleTypeDef *pTFTHandle, int16_t peak, uint8_t mode, uint16_
 
 void TFT_Draw_axis(TFT_HandleTypeDef *pTFTHandle)
 {
-	TFT_String(pTFTHandle, 15, 0, White, Blue, " Data Graph ");
+	TFT_String(pTFTHandle, 15, 0, White, Blue, (uint8_t *)" Data Graph ");
 
 	TFT_Line(pTFTHandle, 15, 215, 310, 215, White);
 	TFT_Line(pTFTHandle, 305, 210, 310, 215, White);

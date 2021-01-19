@@ -11,7 +11,7 @@
 TIM_HandleTypeDef 		TIM6Handle;
 TIM_HandleTypeDef 		TIM4Handle;
 BLDC_HandleTypeDef 		BLDC1Handle;
-UART_HandleTypeDef 		UART2Handle;
+UART_HandleTypeDef 		UART3Handle;
 DMA_HandleTypeDef		DMA1Handle;
 TFT_HandleTypeDef		TFT1Handle;
 TS_HandleTypeDef		TS1Handle;
@@ -47,7 +47,7 @@ void Button_Init(void)
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
 	// 1. Initialize GPIO for START/STOP Button
-	GPIOInit.Pin = GPIO_PIN_7;
+	GPIOInit.Pin = GPIO_PIN_4;
 	GPIOInit.Mode = GPIO_MODE_INPUT;
 	GPIOInit.Pull = GPIO_PULLUP;
 	GPIO_Init(GPIOA, &GPIOInit);
@@ -94,19 +94,19 @@ void BLDC1_Init(void)
 }
 
 
-void UART2_Init(void)
+void UART3_Init(void)
 {
-	UART2Handle.Instance = USART2;
-	UART2Handle.Init.Mode = UART_MODE_TX;
-	UART2Handle.Init.OverSampling = UART_OVERSAMPLING_16;
-	UART2Handle.Init.BaudRate = USART_STD_BAUD_115200;
-	UART2Handle.Init.Parity = UART_PARITY_NONE;
-	UART2Handle.Init.StopBits = UART_STOPBITS_1;
-	UART2Handle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	UART2Handle.Init.WordLength = UART_WORDLENGTH_8B;
-	UART2Handle.hdmatx = &DMA1Handle;
+	UART3Handle.Instance = USART3;
+	UART3Handle.Init.Mode = UART_MODE_TX;
+	UART3Handle.Init.OverSampling = UART_OVERSAMPLING_16;
+	UART3Handle.Init.BaudRate = USART_STD_BAUD_115200;
+	UART3Handle.Init.Parity = UART_PARITY_NONE;
+	UART3Handle.Init.StopBits = UART_STOPBITS_1;
+	UART3Handle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	UART3Handle.Init.WordLength = UART_WORDLENGTH_8B;
+	UART3Handle.hdmatx = &DMA1Handle;
 
-	USART_Init(&UART2Handle);
+	USART_Init(&UART3Handle);
 }
 
 
@@ -136,22 +136,22 @@ void DMA1_Init(void)
 	RCC_DMA1_CLK_ENABLE();
 
 	// 2. Configure the NVIC of DMA1 channel7
-	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL7, NVIC_PRIOR_15, ENABLE);
+	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL2, NVIC_PRIOR_15, ENABLE);
 }
 
 
 void DMA1_Interrupt_Configuration(void)
 {
 	// 1. Enable Half-transfer interrupt
-	//DMA1_Channel7->CCR |= (0x1 << 2);
+	//DMA1_Channel2->CCR |= (0x1 << 2);
 
 	// 2. Enable Transfer complete interrupt
-	DMA1_Channel7->CCR |= (0x1 << 1);
+	DMA1_Channel2->CCR |= (0x1 << 1);
 
 	// 3. Enable Transfer error interrupt
-	DMA1_Channel7->CCR |= (0x1 << 3);
+	DMA1_Channel2->CCR |= (0x1 << 3);
 
-	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL7, NVIC_PRIOR_15, ENABLE);
+	NVIC_IRQConfig(IRQ_NO_DMA1_CHANNEL2, NVIC_PRIOR_15, ENABLE);
 }
 
 
@@ -194,7 +194,7 @@ void Test_Init(void)
 
 	memset(&DebugLed,0, sizeof(DebugLed));
 
-	DebugLed.Pin = GPIO_PIN_5;
+	DebugLed.Pin = GPIO_PIN_0;
 	DebugLed.Mode = GPIO_MODE_OUTPUT_PP;
 	DebugLed.Pull = GPIO_NOPULL;
 	DebugLed.Speed = GPIO_SPEED_FREQ_MEDIUM;
@@ -220,7 +220,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 	{
 		uint8_t buttonState;
 
-		buttonState = READ_BIT(GPIOA->IDR, GPIO_PIN_7);
+		buttonState = READ_BIT(GPIOA->IDR, GPIO_PIN_4);
 
 		if(buttonState == BUTTON_PRESSED)
 		{
@@ -242,7 +242,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 				/* Set PWM duty cycle by Speed PID calculation */
 				BLDC_SpeedPID(&BLDC1Handle, 0.1);
 
-				/* Transmit Motor Speed value to PC through UART2 */
+				/* Transmit Motor Speed value to PC through UART3 */
 				int16_t motorSpeed, motorSpeedAbs;
 
 				motorSpeed = (int16_t)BLDC1Handle.CurSpeed;
@@ -258,7 +258,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 				MotorSpeedStr[4] = (motorSpeedAbs % 10) + 48;
 				MotorSpeedStr[5] = '\n';
 
-				UART_Transmit_DMA(&UART2Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
+				UART_Transmit_DMA(&UART3Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
 
 				count = 0;
 			}
@@ -275,7 +275,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 
 
-		/* Transmit Motor Position value to PC through UART2 */
+		/* Transmit Motor Position value to PC through UART3 */
 		if(count >= 2)		// Every 2ms
 		{
 			if(BLDC1Handle.RotationDir == CW)			sign = '+';
@@ -284,7 +284,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 			//sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
 			sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);	// To see the case of TrjCurPosition
 
-			UART_Transmit_DMA(&UART2Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
+			UART_Transmit_DMA(&UART3Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
 
 			count = 0;
 		}
@@ -297,7 +297,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 void EXTI_Callback(uint32_t GPIO_Pin)
 {
 	// 1. Detect current HallPhase location
-	BLDC1Handle.HallPhase = (READ_BIT(GPIOC->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 6U;
+	BLDC1Handle.HallPhase = (READ_BIT(GPIOA->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 5U;
 
 	// 2. Get current position value
 	BLDC_Get_Position(&BLDC1Handle);
@@ -320,9 +320,11 @@ void MemsetHandleStructure(void)
 	memset(&TIM6Handle, 0, sizeof(TIM6Handle));
 	memset(&TIM4Handle, 0, sizeof(TIM4Handle));
 	memset(&BLDC1Handle, 0, sizeof(BLDC1Handle));
-	memset(&UART2Handle, 0, sizeof(UART2Handle));
+	memset(&UART3Handle, 0, sizeof(UART3Handle));
 	memset(&DMA1Handle, 0, sizeof(DMA1Handle));
 	memset(&TFT1Handle, 0, sizeof(TFT1Handle));
+	memset(&TS1Handle, 0, sizeof(TS1Handle));
+	memset(&SPI2Handle, 0, sizeof(SPI2Handle));
 }
 
 

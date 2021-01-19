@@ -8,7 +8,6 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include <ts.h>
 #include "stm32f103xx.h"
 #include "common.h"
 #include "bldc.h"
@@ -22,8 +21,8 @@
 #define DISABLE_HALLSENSOR_EXTI()				NVIC_IRQConfig(IRQ_NO_EXTI9_5, NVIC_PRIOR_8, DISABLE)
 
 // DMA Macro function
-#define ENABLE_DMA1_CHANNEL7()					SET_BIT(DMA1_Channel7->CCR, (0x1 << 0))
-#define DISABLE_DMA1_CHANNEL7()					CLEAR_BIT(DMA1_Channel7->CCR, (0x1 << 0))
+#define ENABLE_DMA1_CHANNEL2()					SET_BIT(DMA1_Channel2->CCR, (0x1 << 0))
+#define DISABLE_DMA1_CHANNEL2()					CLEAR_BIT(DMA1_Channel2->CCR, (0x1 << 0))
 #define IS_IT_HT()								(DMA1->ISR & (0x1 << 26))
 #define IS_IT_TC()								(DMA1->ISR & (0x1 << 25))
 #define IS_IT_TE()								(DMA1->ISR & (0x1 << 27))
@@ -32,7 +31,7 @@
 extern TIM_HandleTypeDef TIM6Handle;
 extern TIM_HandleTypeDef TIM4Handle;
 extern BLDC_HandleTypeDef BLDC1Handle;
-extern UART_HandleTypeDef UART2Handle;
+extern UART_HandleTypeDef UART3Handle;
 extern DMA_HandleTypeDef DMA1Handle;
 extern TFT_HandleTypeDef TFT1Handle;
 extern TS_HandleTypeDef	TS1Handle;
@@ -49,7 +48,7 @@ extern uint8_t startFlag;
 /* Extern Initialization functions */
 extern void Button_Init(void);
 extern void BLDC1_Init(void);
-extern void UART2_Init(void);
+extern void UART3_Init(void);
 extern void TIM6_Init(void);
 extern void DMA1_Init(void);
 extern void DMA1_Interrupt_Configuration(void);

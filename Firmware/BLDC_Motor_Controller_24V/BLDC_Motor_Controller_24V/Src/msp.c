@@ -66,6 +66,40 @@ void USART_MspInit(UART_HandleTypeDef *pUARTHandle)
 		pUARTHandle->hdmatx = &DMA1Handle;
 		DMA1Handle.Parent = pUARTHandle;
 	}
+	else if(pUARTHandle->Instance == USART3)
+	{
+		/* USART3 GPIO Configuration */
+
+		// USART3 Tx
+		GPIOHandle.Instance = GPIOB;
+		GPIOHandle.Init.Mode = GPIO_MODE_AF_PP;
+		GPIOHandle.Init.Pin = GPIO_PIN_10;
+		GPIOHandle.Init.Pull = GPIO_PULLUP;
+		GPIOHandle.Init.Speed = GPIO_SPEED_FREQ_HIGH;
+
+		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
+
+		// USART3 Rx
+		GPIOHandle.Init.Mode = GPIO_MODE_INPUT;
+		GPIOHandle.Init.Pin = GPIO_PIN_11;
+
+		GPIO_Init(GPIOHandle.Instance, &GPIOHandle.Init);
+
+		/* USART3 DMA Configuration */
+		pUARTHandle->hdmatx->Instance = DMA1_Channel2;
+		pUARTHandle->hdmatx->Init.Direction = DMA_MEMORY_TO_PERIPH;
+		pUARTHandle->hdmatx->Init.PeriphInc = DMA_PINC_DISABLE;
+		pUARTHandle->hdmatx->Init.MemInc = DMA_MINC_ENABLE;
+		pUARTHandle->hdmatx->Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+		pUARTHandle->hdmatx->Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+		pUARTHandle->hdmatx->Init.Mode = DMA_NORMAL;
+		pUARTHandle->hdmatx->Init.Priority = DMA_PRIORITY_LOW;
+		DMA_Init(pUARTHandle->hdmatx);
+
+
+		pUARTHandle->hdmatx = &DMA1Handle;
+		DMA1Handle.Parent = pUARTHandle;
+	}
 
 	// 2. Configure CLOCK for USART
 	USART_PeripheralClockControl(pUARTHandle->Instance, ENABLE);
@@ -157,10 +191,10 @@ void BLDC_MspInit(BLDC_HandleTypeDef *pBLDCHandle)
 		BLDC1Handle.Init.GPIO_Pin_WB = GPIO_PIN_8;
 		BLDC1Handle.Init.GPIO_Pins_Bottom = BLDC1Handle.Init.GPIO_Pin_UB | BLDC1Handle.Init.GPIO_Pin_VB | BLDC1Handle.Init.GPIO_Pin_WB;
 
-		BLDC1Handle.Init.GPIOx_Hall = GPIOC;
-		BLDC1Handle.Init.GPIO_Pin_HA = GPIO_PIN_6;
-		BLDC1Handle.Init.GPIO_Pin_HB = GPIO_PIN_7;
-		BLDC1Handle.Init.GPIO_Pin_HC = GPIO_PIN_8;
+		BLDC1Handle.Init.GPIOx_Hall = GPIOA;
+		BLDC1Handle.Init.GPIO_Pin_HA = GPIO_PIN_5;
+		BLDC1Handle.Init.GPIO_Pin_HB = GPIO_PIN_6;
+		BLDC1Handle.Init.GPIO_Pin_HC = GPIO_PIN_7;
 		BLDC1Handle.Init.GPIO_Pins_Hall = BLDC1Handle.Init.GPIO_Pin_HA | BLDC1Handle.Init.GPIO_Pin_HB | BLDC1Handle.Init.GPIO_Pin_HC;
 
 
