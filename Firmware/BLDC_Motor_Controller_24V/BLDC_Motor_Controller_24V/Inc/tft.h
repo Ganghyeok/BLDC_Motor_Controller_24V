@@ -62,6 +62,8 @@ typedef struct
 
 	uint8_t				Ycharacter;
 
+	uint8_t				nextline_flag;
+
 	uint8_t				Xcursor;
 
 	uint8_t				Ycursor;

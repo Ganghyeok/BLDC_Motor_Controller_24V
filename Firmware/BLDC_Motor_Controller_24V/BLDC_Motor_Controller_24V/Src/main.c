@@ -25,7 +25,7 @@ int main(void)
 	// 1. System Clock configuration to 72MHz
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);
 
-	Delay_ms(3000);
+	Delay_ms(1000);
 
 	// 2. Clear All members of Handle structures to 0
 	MemsetHandleStructure();
@@ -35,7 +35,7 @@ int main(void)
 
 	// 3. Initialize peripherals
 	DMA1_Init();				// Initialize DMA1
-	Button_Init();				// Initialize peripherals related to Button
+	Key_Init();					// Initialize peripherals related to Button
 	BLDC1_Init();				// Initialize peripherals related to BLDC motor
 	UART3_Init();				// Initialize UART2 to transmit data to PC
 	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
@@ -64,76 +64,42 @@ int main(void)
 	TFT1Handle.foreground = White;
 	TFT1Handle.background = Black;
 
+	TFT_String(&TFT1Handle, 9, 10, White, Black, (uint8_t*)"BLDC Motor Controller");
+	TFT_String(&TFT1Handle, 7, 15, White, Black, (uint8_t*)"Designed by Ganghyeok Lim");
+	Delay_ms(1000);
+
+//	State = STATE_MENU;
+	TFT_Clear_Screen(&TFT1Handle);
+
 	while(1)
 	{
-		TS_Input(&TS1Handle);
-
 		TFT_xy(&TFT1Handle, 10, 10);
-		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.x_touch, 0, 5);
-		TFT_xy(&TFT1Handle, 18, 10);
-		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.y_touch, 0, 5);
+		TFT_Signed_decimal(&TFT1Handle, Key0_count, 0, 3);
+		TFT_xy(&TFT1Handle, 10, 12);
+		TFT_Signed_decimal(&TFT1Handle, Key1_count, 0, 3);
+		TFT_xy(&TFT1Handle, 10, 14);
+		TFT_Signed_decimal(&TFT1Handle, Key2_count, 0, 3);
+		TFT_xy(&TFT1Handle, 10, 16);
+		TFT_Signed_decimal(&TFT1Handle, Key3_count, 0, 3);
 
-		Delay_ms(10);
 
-		if(ButtonFlag == FLAG_SET)
-		{
-			/* Button is pressed */
-
-			Delay_ms(2000);		// Wait a while to avoid Button chattering
-
-			if(BLDC1Handle.MotorState == MOTOR_STATE_STOP)
-			{
-				/* Previous Motor state was MOTOR_STATE_STOP */
-
-				// 1. To Make 'BLDC_Get_Position' function Operate perfectly, Set Old HallPhase location based on Current HallPhase
-				BLDC_SET_OLD_HALLPHASE(&BLDC1Handle);
-
-				// 2. Enable EXTI of Hall sensor
-				ENABLE_HALLSENSOR_EXTI();
-
-				// 3. Charge Bootstrap Capacitor for 10ms before Drive BLDC motor
-				BLDC_BootstrapCap_Charge(&BLDC1Handle);
-
-				// 4. Set Reference Speed and PID gain
-				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 900);
-				BLDC_PID_GAIN_SET(&BLDC1Handle, 0.02, 8, 0);	// P : 0.01, I : 0.10, D : 0
-
-				// 5. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_SPEED
-				BLDC1Handle.MotorState = MOTOR_STATE_SPEED;
-
-				// 6. Trigger EXTI interrupt by SW to Execute 'BLDC_Drive' function. Then, Motor rotates with given PWM duty cycle
-				EXTI->SWIER |= (0x1 << 5);
-			}
-
-			else if(BLDC1Handle.MotorState == MOTOR_STATE_SPEED)
-			{
-				/* Previous Motor state was MOTOR_STATE_SPEED */
-
-				// 1. Set Reference Speed to 0
-				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 0);
-
-				// 2. Wait until the Motor stops
-				while( ((int16_t)BLDC1Handle.CurSpeed) != 0 );
-
-				Delay_ms(5000);
-
-				// 3. Change MotorState from MOTOR_STATE_SPEED to MOTOR_STATE_STOP
-				BLDC1Handle.MotorState = MOTOR_STATE_STOP;
-
-				// 4. Disable EXTI of Hall sensor
-				DISABLE_HALLSENSOR_EXTI();
-
-				// 5. Clear GPIO pin of Top side(UT, VT, WT)
-				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
-
-				// 6. Disable All PWM channels
-				DisableTimerPwmChannel(&BLDC1Handle);
-			}
-
-			ButtonFlag = FLAG_RESET;
-		}
+		Delay_ms(100);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //int main(void)
@@ -151,7 +117,123 @@ int main(void)
 //
 //	// 3. Initialize peripherals
 //	DMA1_Init();				// Initialize DMA1
-//	Button_Init();				// Initialize peripherals related to Button
+//	Key_Init();				// Initialize peripherals related to Button
+//	BLDC1_Init();				// Initialize peripherals related to BLDC motor
+//	UART3_Init();				// Initialize UART2 to transmit data to PC
+//	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
+//	TFT1_Init();
+//	TS1_Init();
+//	SPI_ENABLE(&SPI2Handle);
+//	Delay_ms(10);
+//
+//
+//	// 4. Start PWM for UB, VB, WB
+//	StartTimerPwm(&BLDC1Handle);
+//	Delay_ms(10);
+//
+//	// 5. Disable All PWM channels
+//	DisableTimerPwmChannel(&BLDC1Handle);
+//	Delay_ms(10);
+//
+//	/*
+//	 * 		Until Here,
+//	 *
+//	 * 		Timer PWM CCR value : 0
+//	 * 		NVIC for EXTI : Disabled
+//	 * 		Timer PWM channels : Disabled
+//	 */
+//
+//	TFT1Handle.foreground = White;
+//	TFT1Handle.background = Black;
+//
+//	while(1)
+//	{
+//		TS_Input(&TS1Handle);
+//
+//		TFT_xy(&TFT1Handle, 10, 10);
+//		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.x_touch, 0, 5);
+//		TFT_xy(&TFT1Handle, 18, 10);
+//		TFT_Unsigned_decimal(&TFT1Handle, TS1Handle.y_touch, 0, 5);
+//
+//		Delay_ms(10);
+//
+//		if(KeyFlag == FLAG_SET)
+//		{
+//			/* Button is pressed */
+//
+//			Delay_ms(2000);		// Wait a while to avoid Button chattering
+//
+//			if(BLDC1Handle.MotorState == MOTOR_STATE_STOP)
+//			{
+//				/* Previous Motor state was MOTOR_STATE_STOP */
+//
+//				// 1. To Make 'BLDC_Get_Position' function Operate perfectly, Set Old HallPhase location based on Current HallPhase
+//				BLDC_SET_OLD_HALLPHASE(&BLDC1Handle);
+//
+//				// 2. Enable EXTI of Hall sensor
+//				ENABLE_HALLSENSOR_EXTI();
+//
+//				// 3. Charge Bootstrap Capacitor for 10ms before Drive BLDC motor
+//				BLDC_BootstrapCap_Charge(&BLDC1Handle);
+//
+//				// 4. Set Reference Speed and PID gain
+//				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 900);
+//				BLDC_PID_GAIN_SET(&BLDC1Handle, 0.02, 8, 0);	// P : 0.01, I : 0.10, D : 0
+//
+//				// 5. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_SPEED
+//				BLDC1Handle.MotorState = MOTOR_STATE_SPEED;
+//
+//				// 6. Trigger EXTI interrupt by SW to Execute 'BLDC_Drive' function. Then, Motor rotates with given PWM duty cycle
+//				EXTI->SWIER |= (0x1 << 5);
+//			}
+//
+//			else if(BLDC1Handle.MotorState == MOTOR_STATE_SPEED)
+//			{
+//				/* Previous Motor state was MOTOR_STATE_SPEED */
+//
+//				// 1. Set Reference Speed to 0
+//				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 0);
+//
+//				// 2. Wait until the Motor stops
+//				while( ((int16_t)BLDC1Handle.CurSpeed) != 0 );
+//
+//				Delay_ms(5000);
+//
+//				// 3. Change MotorState from MOTOR_STATE_SPEED to MOTOR_STATE_STOP
+//				BLDC1Handle.MotorState = MOTOR_STATE_STOP;
+//
+//				// 4. Disable EXTI of Hall sensor
+//				DISABLE_HALLSENSOR_EXTI();
+//
+//				// 5. Clear GPIO pin of Top side(UT, VT, WT)
+//				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+//
+//				// 6. Disable All PWM channels
+//				DisableTimerPwmChannel(&BLDC1Handle);
+//			}
+//
+//			KeyFlag = FLAG_RESET;
+//		}
+//	}
+//}
+
+
+//int main(void)
+//{
+//	// 1. System Clock configuration to 72MHz
+//	SystemClock_Config(SYSCLK_FREQ_72MHZ);
+//
+//	Delay_ms(3000);
+//
+//	// 2. Clear All members of Handle structures to 0
+//	MemsetHandleStructure();
+//
+//	RCC_AFIO_CLK_ENABLE();
+//	AFIO_REMAP_SWJ_NOJTAG();
+//
+//	// 3. Initialize peripherals
+//	DMA1_Init();				// Initialize DMA1
+//	Key_Init();				// Initialize peripherals related to Button
 //	BLDC1_Init();				// Initialize peripherals related to BLDC motor
 //	UART3_Init();				// Initialize UART2 to transmit data to PC
 //	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
@@ -191,7 +273,7 @@ int main(void)
 //
 //		Delay_ms(10);
 //
-//		if(ButtonFlag == FLAG_SET)
+//		if(KeyFlag == FLAG_SET)
 //		{
 //			/* Button is pressed */
 //
@@ -259,7 +341,7 @@ int main(void)
 //				BLDC1Handle.PwmPID = 0;
 //			}
 //
-//			ButtonFlag = FLAG_RESET;
+//			KeyFlag = FLAG_RESET;
 //		}
 //	}
 //}

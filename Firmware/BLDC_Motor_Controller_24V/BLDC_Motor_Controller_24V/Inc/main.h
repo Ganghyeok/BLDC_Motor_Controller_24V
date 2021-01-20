@@ -14,6 +14,12 @@
 #include "tft.h"
 #include "ts.h"
 
+/* Application Specific Macro */
+#define STATE_MENU								0
+#define STATE_SPEED								1
+#define STATE_POSITION							2
+#define STATE_POSITION_TRACKING					3
+#define STATE_END								4
 
 /* Application Specific Macro functions */
 #define WAIT_BTN_PRESS(GPIOx, GPIO_PIN_NO)		WAIT_FLAG_CLEAR(GPIOx->IDR, GPIO_PIN_NO)
@@ -27,7 +33,9 @@
 #define IS_IT_TC()								(DMA1->ISR & (0x1 << 25))
 #define IS_IT_TE()								(DMA1->ISR & (0x1 << 27))
 
+
 /* Extern Global variables */
+/* Peripheral Handle Definitions */
 extern TIM_HandleTypeDef 						TIM6Handle;
 extern TIM_HandleTypeDef 						TIM4Handle;
 extern BLDC_HandleTypeDef 						BLDC1Handle;
@@ -36,15 +44,26 @@ extern DMA_HandleTypeDef 						DMA1Handle;
 extern TFT_HandleTypeDef 						TFT1Handle;
 extern TS_HandleTypeDef							TS1Handle;
 extern SPI_HandleTypeDef 						SPI2Handle;
-extern uint8_t 									ButtonFlag;
+
+/* Status Flags */
+extern uint8_t 									State;
+extern uint8_t 									KeyFlag;
 extern uint8_t 									startFlag;
+
+/* Key Count Variables */
+extern int32_t 									Key0_count;
+extern int32_t 									Key1_count;
+extern int32_t 									Key2_count;
+extern int32_t 									Key3_count;
+
+/* Strings for UART */
 extern char 									MotorSpeedStr[6];
 extern char 									MotorPositionStr[8];
 extern char 									Msg1[50];
 
 
 /* Extern Initialization functions */
-extern void Button_Init(void);
+extern void Key_Init(void);
 extern void BLDC1_Init(void);
 extern void UART3_Init(void);
 extern void TIM6_Init(void);

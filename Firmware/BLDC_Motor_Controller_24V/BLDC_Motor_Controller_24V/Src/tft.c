@@ -461,10 +461,12 @@ void TFT_String(TFT_HandleTypeDef *pTFTHandle, uint8_t xChar, uint8_t yChar, uin
 	uint8_t ch1;
 
 	pTFTHandle->Xcharacter = xChar;
-	pTFTHandle->Ycharacter = xChar;
+	pTFTHandle->Ycharacter = yChar;
 
 	pTFTHandle->foreground = colorfore;
 	pTFTHandle->background = colorback;
+
+	pTFTHandle->nextline_flag = 0;
 
 	while(*str)
 	{
@@ -476,7 +478,6 @@ void TFT_String(TFT_HandleTypeDef *pTFTHandle, uint8_t xChar, uint8_t yChar, uin
 			TFT_English(pTFTHandle, ch1);
 		}
 	}
-
 }
 
 
@@ -543,6 +544,7 @@ void TFT_English(TFT_HandleTypeDef *pTFTHandle, uint8_t code)
 
 	if(pTFTHandle->Xcharacter >= pTFTHandle->XcharacterLimit)
 	{
+		pTFTHandle->nextline_flag = 1;
 		pTFTHandle->Xcharacter = 0;
 		pTFTHandle->Ycharacter += 2;
 
@@ -566,7 +568,11 @@ void TFT_English(TFT_HandleTypeDef *pTFTHandle, uint8_t code)
 		}
 	}
 
-	if(pTFTHandle->background != Transparent)
+	if((pTFTHandle->nextline_flag == 1) && (pTFTHandle->Xcharacter == 0) && (code == ' '))
+	{
+		return;
+	}
+	else if(pTFTHandle->background != Transparent)
 	{
 		xPos = pTFTHandle->Xcharacter * 8;
 

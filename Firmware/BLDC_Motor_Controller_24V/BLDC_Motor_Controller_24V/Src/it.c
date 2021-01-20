@@ -26,12 +26,33 @@ void DMA1_Channel2_IRQHandler(void)
 }
 
 
-//void EXTI0_IRQHandler(void)
-//{
-//	EXTI->PR |= GPIO_PIN_0;
-//
-//	GPIO_TogglePin(GPIOA, GPIO_PIN_1);
-//}
+void EXTI0_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_0);
+}
 
+
+void EXTI1_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_1);
+}
+
+
+void EXTI2_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_2);
+}
+
+
+void EXTI3_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_3);
+}
+
+
+void EXTI4_IRQHandler(void)
+{
+	EXTI_IRQHandling(GPIO_PIN_4);
+}
 
 

@@ -8,6 +8,7 @@
 #include "main.h"
 
 
+/* Peripheral Handle Definitions */
 TIM_HandleTypeDef 			TIM6Handle;
 TIM_HandleTypeDef 			TIM4Handle;
 BLDC_HandleTypeDef 			BLDC1Handle;
@@ -17,12 +18,21 @@ TFT_HandleTypeDef			TFT1Handle;
 TS_HandleTypeDef			TS1Handle;
 SPI_HandleTypeDef			SPI2Handle;
 
-uint8_t ButtonFlag = FLAG_RESET;
-uint8_t startFlag = FLAG_RESET;
+/* Status Flags */
+uint8_t State = 			STATE_MENU;
+uint8_t KeyFlag = 			FLAG_RESET;
+uint8_t startFlag = 		FLAG_RESET;
 
-char MotorSpeedStr[6] = {0,};
-char MotorPositionStr[8] = {0,};
-char Msg1[50] = {0,};
+/* Key Count Variables */
+int32_t Key0_count = 		0;
+int32_t Key1_count = 		0;
+int32_t Key2_count = 		0;
+int32_t Key3_count = 		0;
+
+/* Strings for UART */
+char MotorSpeedStr[6] = 	{0,};
+char MotorPositionStr[8] = 	{0,};
+char Msg1[50] = 			{0,};
 
 
 /********************************************************************************************************************
@@ -35,17 +45,46 @@ char Msg1[50] = {0,};
  *												Initialization Function												*
  ********************************************************************************************************************/
 
-void Button_Init(void)
+void Key_Init(void)
 {
 	GPIO_InitTypeDef GPIOInit;
 
 	memset(&GPIOInit, 0, sizeof(GPIOInit));
 
-	// 1. Initialize GPIO for START/STOP Button
-	GPIOInit.Pin = GPIO_PIN_4;
-	GPIOInit.Mode = GPIO_MODE_INPUT;
+	/* Init GPIO of MODE Button */
+	GPIOInit.Pin = GPIO_PIN_0;
+	GPIOInit.Mode = GPIO_MODE_IT_FALLING;
 	GPIOInit.Pull = GPIO_PULLUP;
 	GPIO_Init(GPIOA, &GPIOInit);
+	NVIC_IRQConfig(IRQ_NO_EXTI0, NVIC_PRIOR_15, ENABLE);
+
+	/* Init GPIO of Up Button */
+	GPIOInit.Pin = GPIO_PIN_1;
+	GPIOInit.Mode = GPIO_MODE_IT_FALLING;
+	GPIOInit.Pull = GPIO_PULLUP;
+	GPIO_Init(GPIOA, &GPIOInit);
+	NVIC_IRQConfig(IRQ_NO_EXTI1, NVIC_PRIOR_15, ENABLE);
+
+	/* Init GPIO of Down Button */
+	GPIOInit.Pin = GPIO_PIN_2;
+	GPIOInit.Mode = GPIO_MODE_IT_FALLING;
+	GPIOInit.Pull = GPIO_PULLUP;
+	GPIO_Init(GPIOA, &GPIOInit);
+	NVIC_IRQConfig(IRQ_NO_EXTI2, NVIC_PRIOR_15, ENABLE);
+
+	/* Init GPIO of START/STOP Button */
+	GPIOInit.Pin = GPIO_PIN_3;
+	GPIOInit.Mode = GPIO_MODE_IT_FALLING;
+	GPIOInit.Pull = GPIO_PULLUP;
+	GPIO_Init(GPIOA, &GPIOInit);
+	NVIC_IRQConfig(IRQ_NO_EXTI3, NVIC_PRIOR_15, ENABLE);
+
+	/* Init GPIO of EMERGENCY STOP Button */
+	GPIOInit.Pin = GPIO_PIN_4;
+	GPIOInit.Mode = GPIO_MODE_IT_FALLING;
+	GPIOInit.Pull = GPIO_PULLUP;
+	GPIO_Init(GPIOA, &GPIOInit);
+	NVIC_IRQConfig(IRQ_NO_EXTI4, NVIC_PRIOR_15, ENABLE);
 }
 
 
@@ -141,6 +180,7 @@ void TFT1_Init(void)
 	TFT1Handle.ScreenMode = 'L';
 	TFT1Handle.XcharacterLimit = 40;
 	TFT1Handle.YcharacterLimit = 30;
+	TFT1Handle.nextline_flag = 0;
 	TFT1Handle.cursor_flag = 0;
 	TFT1Handle.underscore_flag = 0;
 	TFT1Handle.outline_flag = 0;
@@ -196,7 +236,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 
 	/* Check the Button is pressed */
-	if(ButtonFlag == FLAG_RESET)
+	if(KeyFlag == FLAG_RESET)
 	{
 		uint8_t buttonState;
 
@@ -204,7 +244,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 		if(buttonState == BUTTON_PRESSED)
 		{
-			ButtonFlag = FLAG_SET;
+			KeyFlag = FLAG_SET;
 		}
 	}
 
@@ -275,15 +315,62 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 void EXTI_Callback(uint32_t GPIO_Pin)
 {
-	// 1. Detect current HallPhase location
-	BLDC1Handle.HallPhase = (READ_BIT(GPIOA->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 5U;
+	/* When EXTI is triggered by Hall Sensors */
+	if(GPIO_Pin == BLDC1Handle.Init.GPIO_Pins_Hall)
+	{
+		// 1. Detect current HallPhase location
+		BLDC1Handle.HallPhase = (READ_BIT(GPIOA->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 5U;
 
-	// 2. Get current position value
-	BLDC_Get_Position(&BLDC1Handle);
+		// 2. Get current position value
+		BLDC_Get_Position(&BLDC1Handle);
 
-	// 3. Drive BLDC motor according to HallPhase location
-	BLDC_Drive(&BLDC1Handle);
+		// 3. Drive BLDC motor according to HallPhase location
+		BLDC_Drive(&BLDC1Handle);
+	}
 
+	/* When EXTI is triggered by 'MODE' Button */
+	else if(GPIO_Pin == GPIO_PIN_0)
+	{
+		if( (Key0_count >= 4) || (Key0_count < 0) )
+		{
+			Key0_count = 0;
+		}
+		else
+		{
+			Key0_count++;
+		}
+	}
+
+	/* When EXTI is triggered by 'UP' Button */
+	else if(GPIO_Pin == GPIO_PIN_1)
+	{
+		Key1_count++;
+	}
+
+	/* When EXTI is triggered by 'DOWN' Button */
+	else if(GPIO_Pin == GPIO_PIN_2)
+	{
+		Key1_count--;
+	}
+
+	/* When EXTI is triggered by 'START/STOP' Button */
+	else if(GPIO_Pin == GPIO_PIN_3)
+	{
+		Key2_count++;
+	}
+
+	/* When EXTI is triggered by 'EMERGENCY STOP' Button */
+	else if(GPIO_Pin == GPIO_PIN_4)
+	{
+		if(Key3_count >= 1)
+		{
+			Key3_count = 0;
+		}
+		else
+		{
+			Key3_count++;
+		}
+	}
 
 	UNUSED(GPIO_Pin);
 }
