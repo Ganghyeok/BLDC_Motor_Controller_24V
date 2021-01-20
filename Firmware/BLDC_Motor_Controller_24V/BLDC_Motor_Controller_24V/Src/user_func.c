@@ -251,23 +251,22 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 			BLDC_PositionPID(&BLDC1Handle, 0.001);
 
 			startFlag = FLAG_SET;
+
+			/* Transmit Motor Position value to PC through UART3 */
+			if(count >= 2)		// Every 2ms
+			{
+				if(BLDC1Handle.RotationDir == CW)			sign = '+';
+				else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
+
+				//sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
+				sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);	// To see the case of TrjCurPosition
+
+				//UART_Transmit_DMA(&UART3Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
+
+				count = 0;
+			}
 		}
 
-
-
-		/* Transmit Motor Position value to PC through UART3 */
-		if(count >= 2)		// Every 2ms
-		{
-			if(BLDC1Handle.RotationDir == CW)			sign = '+';
-			else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
-
-			//sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
-			sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);	// To see the case of TrjCurPosition
-
-			UART_Transmit_DMA(&UART3Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
-
-			count = 0;
-		}
 
 		count++;
 	}

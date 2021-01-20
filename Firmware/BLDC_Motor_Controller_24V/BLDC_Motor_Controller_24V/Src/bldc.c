@@ -301,7 +301,7 @@ void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 	/* Saturate PWM duty if it exceeds the limit of PWM duty value */
 	uint16_t PwmPID_ABS = (uint16_t)(abs(pBLDCHandle->PwmPID));
 
-	if(PwmPID_ABS > 95)		PwmPID_ABS = 95;
+	if(PwmPID_ABS > (3600 * 0.95))		PwmPID_ABS = (3600 * 0.95);
 
 	SetPwmDuty(pBLDCHandle, PwmPID_ABS);
 }

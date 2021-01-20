@@ -7110,3 +7110,13 @@
 
 
 2021-01-19 22:20:01,211 [INFO] Activator:177 - !SESSION log4j initialized
+2021-01-20 12:05:16,636 [INFO] Activator:176 - 
+
+
+2021-01-20 12:05:16,648 [INFO] Activator:177 - !SESSION log4j initialized
+2021-01-20 12:36:39,365 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] java.io.IOException: 
+2021-01-20 12:36:39,372 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at org.eclipse.cdt.serial.SerialPort.getPortName(Native Method)
+2021-01-20 12:36:39,375 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at org.eclipse.cdt.serial.SerialPort.list(SerialPort.java:265)
+2021-01-20 12:36:39,381 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at com.st.stm32cube.ide.mpu.remote.serial.internal.SerialPortProviderWindows.run(SerialPortProviderWindows.java:107)
+2021-01-20 12:36:39,383 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at java.util.TimerThread.mainLoop(Timer.java:555)
+2021-01-20 12:36:39,387 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at java.util.TimerThread.run(Timer.java:505)
