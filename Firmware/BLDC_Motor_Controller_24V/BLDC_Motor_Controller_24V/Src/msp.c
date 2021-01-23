@@ -117,7 +117,7 @@ void TIM_Base_MspInit(TIM_TypeDef *TIMx)
 		TIM_PeripheralClockControl(TIMx, ENABLE);
 
 		// 3. Configure NVIC for TIM
-		NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_15, ENABLE);
+		NVIC_IRQConfig(IRQ_NO_TIM6, NVIC_PRIOR_14, ENABLE);
 	}
 }
 

@@ -7120,3 +7120,15 @@
 2021-01-20 12:36:39,381 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at com.st.stm32cube.ide.mpu.remote.serial.internal.SerialPortProviderWindows.run(SerialPortProviderWindows.java:107)
 2021-01-20 12:36:39,383 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at java.util.TimerThread.mainLoop(Timer.java:555)
 2021-01-20 12:36:39,387 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] 	at java.util.TimerThread.run(Timer.java:505)
+2021-01-21 09:54:42,260 [INFO] Activator:176 - 
+
+
+2021-01-21 09:54:42,265 [INFO] Activator:177 - !SESSION log4j initialized
+2021-01-22 08:20:17,912 [INFO] Activator:176 - 
+
+
+2021-01-22 08:20:17,927 [INFO] Activator:177 - !SESSION log4j initialized
+2021-01-23 09:28:18,452 [INFO] Activator:176 - 
+
+
+2021-01-23 09:28:18,458 [INFO] Activator:177 - !SESSION log4j initialized

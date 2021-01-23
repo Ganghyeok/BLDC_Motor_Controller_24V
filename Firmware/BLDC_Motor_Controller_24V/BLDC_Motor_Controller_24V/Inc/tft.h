@@ -158,7 +158,6 @@ void TFT_Rectangle(TFT_HandleTypeDef *pTFTHandle, int16_t x1, int16_t y1, int16_
 void TFT_Block(TFT_HandleTypeDef *pTFTHandle, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color, uint16_t fill);
 void TFT_Circle(TFT_HandleTypeDef *pTFTHandle, int16_t x1, int16_t y1, int16_t r, uint16_t color);
 void TFT_Sine(TFT_HandleTypeDef *pTFTHandle, int16_t peak, uint8_t mode, uint16_t color);
-void TFT_Draw_axis(TFT_HandleTypeDef *pTFTHandle);
 
 
 #endif /* TFT_H_ */

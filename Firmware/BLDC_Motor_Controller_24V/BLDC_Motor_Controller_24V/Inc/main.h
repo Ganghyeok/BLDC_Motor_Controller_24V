@@ -47,20 +47,26 @@ extern SPI_HandleTypeDef 						SPI2Handle;
 
 /* Status Flags */
 extern uint8_t 									State;
-extern uint8_t 									KeyFlag;
-extern uint8_t 									startFlag;
 
 /* Key Count Variables */
-extern int32_t 									Key0_count;
-extern int32_t 									Key1_count;
-extern int32_t 									Key2_count;
-extern int32_t 									Key3_count;
+extern int32_t 									Mode_key;				// Count of 'MODE' Key
+extern int32_t 									Up_key;					// Count of 'UP' Key
+extern int32_t									Down_key;				// Count of 'DOWN' Key
+extern int32_t 									Start_key;				// Count of 'START/STOP' Key
+extern int32_t 									EmergencyStop_key;		// Count of 'Emergency STOP' Key
 
 /* Strings for UART */
 extern char 									MotorSpeedStr[6];
 extern char 									MotorPositionStr[8];
 extern char 									Msg1[50];
 
+/* Graph variables */
+extern uint16_t 								x;
+extern uint16_t 								y;
+extern uint16_t 								x_prv;
+extern uint16_t 								y_prv;
+extern uint8_t 									GraphDraw_flag;
+extern uint8_t 									GraphClear_flag;
 
 /* Extern Initialization functions */
 extern void Key_Init(void);
@@ -79,6 +85,18 @@ extern void EXTI_Callback(uint32_t GPIO_Pin);
 
 
 /* Extern Group of functions which belong to main function */
+extern void State_Menu(void);
+extern void State_Speed(void);
+extern void State_Position(void);
+extern void State_Position_Tracking(void);
+extern void State_End(void);
+extern void Reset_All_Variables(void);
+extern void Reset_Speed_Variables(void);
+extern void Reset_Position_Variables(void);
+extern void Draw_axis(TFT_HandleTypeDef *pTFTHandle, uint8_t state);
+extern void Draw_Graph(TFT_HandleTypeDef *pTFTHandle);
+extern void Clear_Graph(TFT_HandleTypeDef *pTFTHandle);
+
 extern void MemsetHandleStructure(void);
 extern void StartTimerPwm(BLDC_HandleTypeDef *pBLDCHandle);
 extern void EnableTimerPwmChannel(BLDC_HandleTypeDef *pBLDCHandle);

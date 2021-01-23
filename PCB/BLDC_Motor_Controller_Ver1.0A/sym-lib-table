@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name BLDC_Motor_Controller_Ver1.0A-rescue)(type Legacy)(uri ${KIPRJMOD}/BLDC_Motor_Controller_Ver1.0A-rescue.lib)(options "")(descr ""))
+)

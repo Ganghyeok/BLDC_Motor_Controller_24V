@@ -68,22 +68,50 @@ int main(void)
 	TFT_String(&TFT1Handle, 7, 15, White, Black, (uint8_t*)"Designed by Ganghyeok Lim");
 	Delay_ms(1000);
 
-//	State = STATE_MENU;
 	TFT_Clear_Screen(&TFT1Handle);
+
+	State = STATE_MENU;
+
 
 	while(1)
 	{
-		TFT_xy(&TFT1Handle, 10, 10);
-		TFT_Signed_decimal(&TFT1Handle, Key0_count, 0, 3);
-		TFT_xy(&TFT1Handle, 10, 12);
-		TFT_Signed_decimal(&TFT1Handle, Key1_count, 0, 3);
-		TFT_xy(&TFT1Handle, 10, 14);
-		TFT_Signed_decimal(&TFT1Handle, Key2_count, 0, 3);
-		TFT_xy(&TFT1Handle, 10, 16);
-		TFT_Signed_decimal(&TFT1Handle, Key3_count, 0, 3);
+		switch (State)
+		{
+			case STATE_MENU :
+			{
+				State_Menu();
+				break;
+			}
 
+			case STATE_SPEED :
+			{
+				State_Speed();
+				break;
+			}
 
-		Delay_ms(100);
+			case STATE_POSITION :
+			{
+				State_Position();
+				break;
+			}
+
+			case STATE_POSITION_TRACKING :
+			{
+				State_Position_Tracking();
+				break;
+			}
+
+			case STATE_END :
+			{
+				State_End();
+				break;
+			}
+
+			default :
+			{
+				break;
+			}
+		}
 	}
 }
 
@@ -117,7 +145,7 @@ int main(void)
 //
 //	// 3. Initialize peripherals
 //	DMA1_Init();				// Initialize DMA1
-//	Key_Init();				// Initialize peripherals related to Button
+//	Key_Init();					// Initialize peripherals related to Button
 //	BLDC1_Init();				// Initialize peripherals related to BLDC motor
 //	UART3_Init();				// Initialize UART2 to transmit data to PC
 //	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period

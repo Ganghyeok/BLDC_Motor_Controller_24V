@@ -27,6 +27,7 @@
 #define MOTOR_STATE_STOP						0
 #define MOTOR_STATE_SPEED						1
 #define MOTOR_STATE_POSITION					2
+#define MOTOR_STATE_POSITION_TRACKING			3
 #define CW										0
 #define CCW										1
 
@@ -38,6 +39,7 @@
 
 #define BLDC_SET_REFERENCE_SPEED(_HANDLE_, speed)			( (_HANDLE_)->RefSpeed = speed )
 
+#define BLDC_SET_REFERENCE_POSITION(_HANDLE_, position)		( (_HANDLE_)->RefPosition = position )
 
 #define BLDC_SET_OLD_HALLPHASE(_HANDLE_)		do{																								\
 																																				\

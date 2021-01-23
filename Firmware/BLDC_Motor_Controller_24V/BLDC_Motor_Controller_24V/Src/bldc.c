@@ -309,12 +309,20 @@ void BLDC_SpeedPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 
 void BLDC_PositionPID(BLDC_HandleTypeDef *pBLDCHandle, double dt)
 {
-	/* Calculate Trajectory Position for given Reference position, Current position, Vmax, Acceleration values  */
-	BLDC_CalculateTrajectoryPosition(pBLDCHandle, dt);
+	if(pBLDCHandle->MotorState == MOTOR_STATE_POSITION)
+	{
+		/* Get PWM duty cycle which is calculated by Error value and PID gain */
+		BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->RefPosition, pBLDCHandle->CurPosition, dt);
+	}
+	else if(pBLDCHandle->MotorState == MOTOR_STATE_POSITION_TRACKING)
+	{
+		/* Calculate Trajectory Position for given Reference position, Current position, Vmax, Acceleration values  */
+		BLDC_CalculateTrajectoryPosition(pBLDCHandle, dt);
 
-	/* Get PWM duty cycle which is calculated by Error value and PID gain */
-	//BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->RefPosition, pBLDCHandle->CurPosition, dt);
-	BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->TrjCurPosition, pBLDCHandle->CurPosition, dt);
+		/* Get PWM duty cycle which is calculated by Error value and PID gain */
+		BLDC_CalculatePID(pBLDCHandle, pBLDCHandle->TrjCurPosition, pBLDCHandle->CurPosition, dt);
+	}
+
 
 	static double maxPidLimit = 3600.;
 	static double minPidLimit = (3600 * 0.00);
@@ -428,7 +436,19 @@ void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt
 				{
 					pBLDCHandle->TrjCurPosition += dtTrjPosition;
 				}
+				else
+				{
+					pBLDCHandle->TrjCurPosition = pBLDCHandle->RefPosition;
+				}
 
+//				double dtTrjPosition;
+//
+//				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+//
+//				if(dtTrjPosition >= 0)
+//				{
+//					pBLDCHandle->TrjCurPosition += dtTrjPosition;
+//				}
 			}
 
 			break;
@@ -444,7 +464,18 @@ void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt
 			}
 			else
 			{
-				pBLDCHandle->TrjCurPosition += (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+				double dtTrjPosition;
+
+				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+
+				if(dtTrjPosition <= 0)
+				{
+					pBLDCHandle->TrjCurPosition += dtTrjPosition;
+				}
+				else
+				{
+					pBLDCHandle->TrjCurPosition = pBLDCHandle->RefPosition;
+				}
 			}
 
 			break;

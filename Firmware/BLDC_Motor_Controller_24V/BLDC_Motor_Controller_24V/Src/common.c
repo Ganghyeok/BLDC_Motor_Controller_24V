@@ -21,12 +21,12 @@ void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di)
 		if(IRQNumber < 32)
 		{
 			// IRQ0 ~ IRQ31
-			NVIC->ISER[0] |= (1 << IRQNumber);
+			NVIC->ISER[0] = (uint32_t)(1UL << (uint32_t)IRQNumber);
 		}
 		else if(IRQNumber < 60)
 		{
 			// IRQ32 ~ IRQ63
-			NVIC->ISER[1] |= (1 << (IRQNumber % 32));
+			NVIC->ISER[1] = (uint32_t)(1UL << (uint32_t)(IRQNumber % 32));
 		}
 
 	}
@@ -35,17 +35,17 @@ void NVIC_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t En_or_Di)
 		if(IRQNumber < 32)
 		{
 			// IRQ0 ~ IRQ31
-			NVIC->ICER[0] |= (1 << IRQNumber);
+			NVIC->ICER[0] = (uint32_t)(1UL << (uint32_t)IRQNumber);
 		}
 		else if(IRQNumber < 60)
 		{
 			// IRQ32 ~ IRQ63
-			NVIC->ICER[1] |= (1 << (IRQNumber % 32));
+			NVIC->ICER[1] = (uint32_t)(1UL << (uint32_t)(IRQNumber % 32));
 		}
 	}
 
 	// IRQ Priority configuration
-	NVIC->IPR[IRQNumber] |= (IRQPriority << 4);
+	NVIC->IPR[IRQNumber] = (IRQPriority << 4UL);
 }
 
 

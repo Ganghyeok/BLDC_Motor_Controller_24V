@@ -29,6 +29,17 @@ void DMA1_Channel2_IRQHandler(void)
 void EXTI0_IRQHandler(void)
 {
 	EXTI_IRQHandling(GPIO_PIN_0);
+
+//	EXTI->PR |= GPIO_PIN_0;		// Clear the pending event from EXTI line
+//
+//	if(Mode_key >= 3)
+//	{
+//		Mode_key = 0;
+//	}
+//	else
+//	{
+//		Mode_key++;
+//	}
 }
 
 
@@ -47,6 +58,17 @@ void EXTI2_IRQHandler(void)
 void EXTI3_IRQHandler(void)
 {
 	EXTI_IRQHandling(GPIO_PIN_3);
+
+//	EXTI->PR |= GPIO_PIN_3;		// Clear the pending event from EXTI line
+//
+//	if(Start_key >= 1)
+//	{
+//		Start_key = 0;
+//	}
+//	else
+//	{
+//		Start_key++;
+//	}
 }
 
 

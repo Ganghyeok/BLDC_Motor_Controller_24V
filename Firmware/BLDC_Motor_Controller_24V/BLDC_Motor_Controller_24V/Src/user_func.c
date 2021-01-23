@@ -20,19 +20,27 @@ SPI_HandleTypeDef			SPI2Handle;
 
 /* Status Flags */
 uint8_t State = 			STATE_MENU;
-uint8_t KeyFlag = 			FLAG_RESET;
-uint8_t startFlag = 		FLAG_RESET;
 
 /* Key Count Variables */
-int32_t Key0_count = 		0;
-int32_t Key1_count = 		0;
-int32_t Key2_count = 		0;
-int32_t Key3_count = 		0;
+
+int32_t Mode_key = 				0;			// Count of 'MODE' Key
+int32_t Up_key = 				0;			// Count of 'UP' Key
+int32_t Down_key = 				0;			// Count of 'DOWN' Key
+int32_t Start_key = 			0;			// Count of 'START/STOP' Key
+int32_t EmergencyStop_key = 	0;			// Count of 'Emergency STOP' Key
 
 /* Strings for UART */
-char MotorSpeedStr[6] = 	{0,};
-char MotorPositionStr[8] = 	{0,};
-char Msg1[50] = 			{0,};
+char MotorSpeedStr[6] = 		{0,};
+char MotorPositionStr[8] = 		{0,};
+char Msg1[50] = 				{0,};
+
+/* Graph variables */
+uint16_t x = 					0;
+uint16_t y = 					0;
+uint16_t x_prv = 				0;
+uint16_t y_prv = 				0;
+uint8_t GraphDraw_flag = 		FLAG_RESET;
+uint8_t GraphClear_flag = 		FLAG_RESET;
 
 
 /********************************************************************************************************************
@@ -230,23 +238,8 @@ void Test_Init(void)
 void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 {
 	/* This Callback function is executed every 1ms by TIM6 */
-
 	static int count = 0;
-	char sign;
 
-
-	/* Check the Button is pressed */
-	if(KeyFlag == FLAG_RESET)
-	{
-		uint8_t buttonState;
-
-		buttonState = READ_BIT(GPIOA->IDR, GPIO_PIN_4);
-
-		if(buttonState == BUTTON_PRESSED)
-		{
-			KeyFlag = FLAG_SET;
-		}
-	}
 
 	/* TIM6 */
 	if(pTIMHandle->Instance == TIM6)
@@ -262,49 +255,100 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 				/* Set PWM duty cycle by Speed PID calculation */
 				BLDC_SpeedPID(&BLDC1Handle, 0.1);
 
-				/* Transmit Motor Speed value to PC through UART3 */
-				int16_t motorSpeed, motorSpeedAbs;
 
-				motorSpeed = (int16_t)BLDC1Handle.CurSpeed;
-				motorSpeedAbs = abs(motorSpeed);
+				/* Calculate the Pixel corresponding to the Speed value */
+				if( (GraphClear_flag == FLAG_RESET) || (GraphDraw_flag == FLAG_RESET) )
+				{
+					y = (uint16_t)((200. * BLDC1Handle.CurSpeed) / (BLDC1Handle.RefSpeed * 4. / 3.));
 
-				if(motorSpeed >= 0)			sign = '+';
-				else if(motorSpeed < 0)		sign = '-';
+					x_prv = x;
+					y_prv = y;
 
-				MotorSpeedStr[0] = sign;
-				MotorSpeedStr[1] = (motorSpeedAbs / 1000) + 48;
-				MotorSpeedStr[2] = ((motorSpeedAbs % 1000) / 100) + 48;
-				MotorSpeedStr[3] = ((motorSpeedAbs % 100) / 10) + 48;
-				MotorSpeedStr[4] = (motorSpeedAbs % 10) + 48;
-				MotorSpeedStr[5] = '\n';
+					x++;
 
-				UART_Transmit_DMA(&UART3Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
+					GraphDraw_flag = FLAG_SET;
+
+					if(x >= 250)
+					{
+						GraphClear_flag = FLAG_SET;
+					}
+				}
+
+
+//				/* Transmit Motor Speed value to PC through UART3 */
+//				int16_t motorSpeed, motorSpeedAbs;
+//				char sign;
+//
+//				motorSpeed = (int16_t)BLDC1Handle.CurSpeed;
+//				motorSpeedAbs = abs(motorSpeed);
+//
+//				if(motorSpeed >= 0)			sign = '+';
+//				else if(motorSpeed < 0)		sign = '-';
+//
+//				MotorSpeedStr[0] = sign;
+//				MotorSpeedStr[1] = (motorSpeedAbs / 1000) + 48;
+//				MotorSpeedStr[2] = ((motorSpeedAbs % 1000) / 100) + 48;
+//				MotorSpeedStr[3] = ((motorSpeedAbs % 100) / 10) + 48;
+//				MotorSpeedStr[4] = (motorSpeedAbs % 10) + 48;
+//				MotorSpeedStr[5] = '\n';
+//
+//				UART_Transmit_DMA(&UART3Handle, (uint8_t*)MotorSpeedStr, strlen((char*)MotorSpeedStr));
 
 				count = 0;
 			}
 		}
 
-		/* Motor State is POSITION */
-		else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION)
+
+		/* If Motor State is POSITION or POSITION_TRACKING */
+		else if( (BLDC1Handle.MotorState == MOTOR_STATE_POSITION) || (BLDC1Handle.MotorState == MOTOR_STATE_POSITION_TRACKING) )
 		{
 			/* Set PWM duty cycle by Position PID calculation */
 			BLDC_PositionPID(&BLDC1Handle, 0.001);
 
-			startFlag = FLAG_SET;
-
-			/* Transmit Motor Position value to PC through UART3 */
-			if(count >= 2)		// Every 2ms
+			if(count >= 10)
 			{
-				if(BLDC1Handle.RotationDir == CW)			sign = '+';
-				else if(BLDC1Handle.RotationDir == CCW)		sign = '-';
+				/* Calculate the Pixel corresponding to the Speed value */
+				if( (GraphClear_flag == FLAG_RESET) || (GraphDraw_flag == FLAG_RESET) )
+				{
+					y = (uint16_t)((200. * BLDC1Handle.CurPosition) / (BLDC1Handle.RefPosition * 4. / 3.));
 
-				//sprintf(Msg1, "%.2lf, %.2lf\n", BLDC1Handle.CurPosition, BLDC1Handle.PwmPID);	// To see the case of RefPosition
-				sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);	// To see the case of TrjCurPosition
+					x_prv = x;
+					y_prv = y;
 
-				//UART_Transmit_DMA(&UART3Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
+					x++;
+
+					GraphDraw_flag = FLAG_SET;
+
+					if(x >= 250)
+					{
+						GraphClear_flag = FLAG_SET;
+					}
+				}
 
 				count = 0;
 			}
+
+
+//			/* Transmit Motor Position value to PC through UART3 */
+//			if(count >= 2)		// Every 2ms
+//			{
+//
+//				if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION)
+//				{
+//					// To see the case of RefPosition
+//					sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.RefPosition, BLDC1Handle.CurPosition);
+//				}
+//				else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION_TRACKING)
+//				{
+//					// To see the case of TrjCurPosition
+//					sprintf(Msg1, "%.2lf,%.2lf\n", BLDC1Handle.TrjCurPosition, BLDC1Handle.CurPosition);
+//				}
+//
+//
+//				UART_Transmit_DMA(&UART3Handle, (uint8_t*)Msg1, strlen((char*)Msg1));
+//
+//				count = 0;
+//			}
 		}
 
 
@@ -315,8 +359,7 @@ void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle)
 
 void EXTI_Callback(uint32_t GPIO_Pin)
 {
-	/* When EXTI is triggered by Hall Sensors */
-	if(GPIO_Pin == BLDC1Handle.Init.GPIO_Pins_Hall)
+	if(GPIO_Pin & BLDC1Handle.Init.GPIO_Pins_Hall)
 	{
 		// 1. Detect current HallPhase location
 		BLDC1Handle.HallPhase = (READ_BIT(GPIOA->IDR, BLDC1Handle.Init.GPIO_Pins_Hall)) >> 5U;
@@ -328,47 +371,49 @@ void EXTI_Callback(uint32_t GPIO_Pin)
 		BLDC_Drive(&BLDC1Handle);
 	}
 
-	/* When EXTI is triggered by 'MODE' Button */
 	else if(GPIO_Pin == GPIO_PIN_0)
 	{
-		if( (Key0_count >= 4) || (Key0_count < 0) )
+		if(Mode_key >= 3)
 		{
-			Key0_count = 0;
+			Mode_key = 0;
 		}
 		else
 		{
-			Key0_count++;
+			Mode_key++;
 		}
 	}
 
-	/* When EXTI is triggered by 'UP' Button */
 	else if(GPIO_Pin == GPIO_PIN_1)
 	{
-		Key1_count++;
+		Up_key++;
 	}
 
-	/* When EXTI is triggered by 'DOWN' Button */
 	else if(GPIO_Pin == GPIO_PIN_2)
 	{
-		Key1_count--;
+		Down_key++;
 	}
 
-	/* When EXTI is triggered by 'START/STOP' Button */
 	else if(GPIO_Pin == GPIO_PIN_3)
 	{
-		Key2_count++;
-	}
-
-	/* When EXTI is triggered by 'EMERGENCY STOP' Button */
-	else if(GPIO_Pin == GPIO_PIN_4)
-	{
-		if(Key3_count >= 1)
+		if(Start_key >= 1)
 		{
-			Key3_count = 0;
+			Start_key = 0;
 		}
 		else
 		{
-			Key3_count++;
+			Start_key++;
+		}
+	}
+
+	else if(GPIO_Pin == GPIO_PIN_4)
+	{
+		if(EmergencyStop_key >= 1)
+		{
+			EmergencyStop_key = 0;
+		}
+		else
+		{
+			EmergencyStop_key++;
 		}
 	}
 
@@ -380,6 +425,757 @@ void EXTI_Callback(uint32_t GPIO_Pin)
 /********************************************************************************************************************
  *							Group of functions which belong to main function for increasing Readability				*
  ********************************************************************************************************************/
+
+void State_Menu(void)
+{
+	// Reset variables (structure members, global variables)
+	Reset_All_Variables();
+
+	TFT_Clear_Screen(&TFT1Handle);
+	Delay_ms(200);
+
+	TFT_String(&TFT1Handle, 10, 10, White, Black, (uint8_t*)"Option : ");
+	Delay_ms(10);
+
+	Mode_key = 0;
+
+	while(1)
+	{
+		switch (Mode_key)
+		{
+			/* Option : Speed Mode */
+			case 0 :
+			{
+				TFT_String(&TFT1Handle, 8, 20, White, Black, (uint8_t*)"      Speed Mode      ");
+				State = STATE_SPEED;
+
+				break;
+			}
+
+			/* Option : Position Mode */
+			case 1 :
+			{
+				TFT_String(&TFT1Handle, 8, 20, White, Black, (uint8_t*)"     Position Mode    ");
+				State = STATE_POSITION;
+
+				break;
+			}
+
+			/* Option : Position Tracking Mode */
+			case 2 :
+			{
+				TFT_String(&TFT1Handle, 8, 20, White, Black, (uint8_t*)"Position Tracking Mode");
+				State = STATE_POSITION_TRACKING;
+
+				break;
+			}
+
+			/* Option : End Mode */
+			case 3 :
+			{
+				TFT_String(&TFT1Handle, 8, 20, White, Black, (uint8_t*)"        End Mode      ");
+				State = STATE_END;
+
+				break;
+			}
+
+			default :
+			{
+				break;
+			}
+		}
+
+		Delay_ms(100);
+
+		if(Start_key >= 1)
+		{
+			Start_key = 0;
+			break;
+		}
+	}
+}
+
+
+void State_Speed(void)
+{
+	TFT_Clear_Screen(&TFT1Handle);
+	Delay_ms(100);
+	Mode_key = FLAG_RESET;
+
+	Draw_axis(&TFT1Handle, State);
+	TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+	TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+	Delay_ms(100);
+
+	while(1)
+	{
+		// Display Reference Speed value
+		TFT_xy(&TFT1Handle, 31, 20);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.RefSpeed, 4, 1);
+
+		// Display Current Speed value
+		TFT_xy(&TFT1Handle, 31, 22);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.CurSpeed, 4, 1);
+
+
+		if(GraphClear_flag == FLAG_SET)
+		{
+			// Erase Graph of Current Position
+			Clear_Graph(&TFT1Handle);
+
+			x = 0;
+			x_prv = 0;
+			y_prv = 0;
+
+			GraphClear_flag = FLAG_RESET;
+
+			TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+			TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+		}
+		else if(GraphDraw_flag == FLAG_SET)
+		{
+			// Draw Graph of Current Position
+			TFT_Line(&TFT1Handle, 50+x_prv, 215-y_prv, 50+x, 215-y, Magenta);
+			GraphDraw_flag = FLAG_RESET;
+		}
+
+
+
+
+		if(Start_key >= FLAG_SET)
+		{
+			Delay_ms(200);		// to Avoid Key chattering
+
+			if(BLDC1Handle.MotorState == MOTOR_STATE_STOP)
+			{
+				Clear_Graph(&TFT1Handle);
+				Delay_ms(10);
+				Draw_axis(&TFT1Handle, State);
+				TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+				TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+
+				// 1. Set Reference Speed
+				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 500);
+
+				// Draw axis value
+				TFT_Color(&TFT1Handle, Cyan, Black);
+				TFT_xy(&TFT1Handle, 0, 1);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefSpeed * 4 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 7);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)BLDC1Handle.RefSpeed, 0, 5);
+				TFT_xy(&TFT1Handle, 0, 13);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefSpeed * 2 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 20);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefSpeed * 1 / 3), 0, 5);
+
+				// 2. Set PID gain
+				BLDC_PID_GAIN_SET(&BLDC1Handle, 0.02, 8, 0);
+
+				// 3. Set Direction of Rotation
+				if(BLDC1Handle.RefSpeed >= 0)			BLDC1Handle.RotationDir = CW;
+				else if(BLDC1Handle.RefSpeed < 0)		BLDC1Handle.RotationDir = CCW;
+
+				// 4. Set Old HallPhase location based on Current HallPhase
+				BLDC_SET_OLD_HALLPHASE(&BLDC1Handle);
+
+				// 5. Charge Bootstrap Capacitor for 10ms
+				BLDC_BootstrapCap_Charge(&BLDC1Handle);
+
+				// 6. Enable EXTI of Hall sensor
+				ENABLE_HALLSENSOR_EXTI();
+
+				// 7. Trigger EXTI interrupt by SW to Execute 'BLDC_Drive' function. (Top Logic On, Bottom PWM On. But TIM_CCR == 0)
+				EXTI->SWIER |= (0x1 << 5);		// The purpose of this line is to trigger EXTI9_5_IRQHandler. So, 5 can be replaced by 6, 7.
+
+				// 8. Reset HallCount value to 0. When EXTI9_5_IRQHandler is triggered, BLDC_Get_Position function increases / dicrease HallCount value by 1
+				BLDC1Handle.HallCount = 0;
+
+				// 9. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_SPEED
+				BLDC1Handle.MotorState = MOTOR_STATE_SPEED;
+			}
+
+			else if(BLDC1Handle.MotorState == MOTOR_STATE_SPEED)
+			{
+				// 1. Set Reference Speed to 0
+				BLDC_SET_REFERENCE_SPEED(&BLDC1Handle, 0);
+
+				// 2. Wait until the Motor stops
+				while( ((int16_t)BLDC1Handle.CurSpeed) != 0 )
+				{
+					TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+					TFT_xy(&TFT1Handle, 31, 20);
+					TFT_Signed_float(&TFT1Handle, BLDC1Handle.RefSpeed, 4, 1);
+
+					TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+					TFT_xy(&TFT1Handle, 31, 22);
+					TFT_Signed_float(&TFT1Handle, BLDC1Handle.CurSpeed, 4, 1);
+				}
+				Delay_ms(100);
+
+				// 3. Disable EXTI of Hall sensor
+				DISABLE_HALLSENSOR_EXTI();
+
+				// 4. Clear GPIO pin of Top side(UT, VT, WT)
+				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+
+				// 5. Disable All PWM channels
+				DisableTimerPwmChannel(&BLDC1Handle);
+
+				// 6. Change MotorState from MOTOR_STATE_SPEED to MOTOR_STATE_STOP
+				BLDC1Handle.MotorState = MOTOR_STATE_STOP;
+
+				// 7. Reset variables
+				Reset_Speed_Variables();
+			}
+
+			Start_key = FLAG_RESET;
+		}
+
+
+		/* If Mode key is pressed when Motor is running, Ignore the Mode key press  */
+		if( (BLDC1Handle.MotorState == MOTOR_STATE_SPEED) && (Mode_key >= FLAG_SET) )
+		{
+			Mode_key = FLAG_RESET;
+		}
+
+		/* If Mode key is pressed when Motor is stopped, Return to the Menu state  */
+		else if( (BLDC1Handle.MotorState == MOTOR_STATE_STOP) && (Mode_key >= FLAG_SET) )
+		{
+			State = STATE_MENU;
+			Mode_key = FLAG_RESET;
+			break;
+		}
+	}
+}
+
+
+void State_Position(void)
+{
+	TFT_Clear_Screen(&TFT1Handle);
+	Delay_ms(100);
+	Mode_key = FLAG_RESET;
+
+	Draw_axis(&TFT1Handle, State);
+	TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+	TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+	Delay_ms(100);
+
+
+	while(1)
+	{
+		// Display Reference Position value
+		TFT_xy(&TFT1Handle, 31, 20);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.RefPosition, 5, 1);
+
+		// Display Current Position value
+		TFT_xy(&TFT1Handle, 31, 22);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.CurPosition, 5, 1);
+
+
+		if(GraphClear_flag == FLAG_SET)
+		{
+			// Erase Graph of Current Position
+			Clear_Graph(&TFT1Handle);
+
+			x = 0;
+			x_prv = 0;
+			y_prv = 0;
+
+			GraphClear_flag = FLAG_RESET;
+
+			TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+			TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+		}
+		else if(GraphDraw_flag == FLAG_SET)
+		{
+			// Draw Graph of Current Position
+			TFT_Line(&TFT1Handle, 50+x_prv, 215-y_prv, 50+x, 215-y, Magenta);
+			GraphDraw_flag = FLAG_RESET;
+		}
+
+
+
+		if(Start_key >= FLAG_SET)
+		{
+			Delay_ms(200);		// to Avoid Key chattering
+
+			if(BLDC1Handle.MotorState == MOTOR_STATE_STOP)
+			{
+				Clear_Graph(&TFT1Handle);
+				Delay_ms(10);
+				Draw_axis(&TFT1Handle, State);
+				TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Ref : ");
+				TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+
+				// 1. Set Reference Position and PID gain
+				BLDC_SET_REFERENCE_POSITION(&BLDC1Handle, 36000);
+
+				// Draw axis value
+				TFT_Color(&TFT1Handle, Cyan, Black);
+				TFT_xy(&TFT1Handle, 0, 1);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 4 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 7);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)BLDC1Handle.RefPosition, 0, 5);
+				TFT_xy(&TFT1Handle, 0, 13);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 2 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 20);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 1 / 3), 0, 5);
+
+				// 2. Set PID gain
+				BLDC_PID_GAIN_SET(&BLDC1Handle, 15, 0, 0.01);
+
+				// 3. Set Direction of Rotation
+				if(BLDC1Handle.RefPosition >= 0)			BLDC1Handle.RotationDir = CW;
+				else if(BLDC1Handle.RefPosition < 0)		BLDC1Handle.RotationDir = CCW;
+
+				// 4. Set Old HallPhase location based on Current HallPhase
+				BLDC_SET_OLD_HALLPHASE(&BLDC1Handle);
+
+				// 5. Charge Bootstrap Capacitor for 10ms
+				BLDC_BootstrapCap_Charge(&BLDC1Handle);
+
+				// 6. Enable EXTI of Hall sensor
+				ENABLE_HALLSENSOR_EXTI();
+
+				// 7. Trigger EXTI interrupt by SW to Execute 'BLDC_Drive' function. (Top Logic On, Bottom PWM On. But TIM_CCR == 0)
+				EXTI->SWIER |= (0x1 << 5);		// The purpose of this line is to trigger EXTI9_5_IRQHandler. So, 5 can be replaced by 6, 7.
+
+				// 8. Reset HallCount value to 0. When EXTI9_5_IRQHandler is triggered, BLDC_Get_Position function increases / dicrease HallCount value by 1
+				BLDC1Handle.HallCount = 0;
+
+				// 9. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_POSITION
+				BLDC1Handle.MotorState = MOTOR_STATE_POSITION;
+			}
+
+			else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION)
+			{
+				// 1. Disable EXTI of Hall sensor
+				DISABLE_HALLSENSOR_EXTI();
+
+				// 2. Clear GPIO pin of Top side(UT, VT, WT)
+				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+
+				// 3. Disable All PWM channels
+				DisableTimerPwmChannel(&BLDC1Handle);
+
+				// 4. Change MotorState from MOTOR_STATE_POSITION to MOTOR_STATE_STOP
+				BLDC1Handle.MotorState = MOTOR_STATE_STOP;
+
+				// 5. Reset variables
+				Reset_Position_Variables();
+			}
+
+			Start_key = FLAG_RESET;
+		}
+
+
+		/* If Mode key is pressed when Motor is running, Ignore the Mode key press  */
+		if( (BLDC1Handle.MotorState == MOTOR_STATE_POSITION) && (Mode_key >= FLAG_SET) )
+		{
+			Mode_key = FLAG_RESET;
+		}
+
+		/* If Mode key is pressed when Motor is stopped, Return to the Menu state  */
+		else if( (BLDC1Handle.MotorState == MOTOR_STATE_STOP) && (Mode_key >= FLAG_SET) )
+		{
+			State = STATE_MENU;
+			Mode_key = FLAG_RESET;
+			break;
+		}
+	}
+}
+
+
+void State_Position_Tracking(void)
+{
+	TFT_Clear_Screen(&TFT1Handle);
+	Delay_ms(100);
+	Mode_key = FLAG_RESET;
+
+	Draw_axis(&TFT1Handle, State);
+	TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Trj : ");
+	TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+	Delay_ms(100);
+
+	while(1)
+	{
+		// Display Trajectory Current Position value
+		TFT_xy(&TFT1Handle, 31, 20);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.TrjCurPosition, 5, 1);
+
+		// Display Current Position value
+		TFT_xy(&TFT1Handle, 31, 22);
+		TFT_Signed_float(&TFT1Handle, BLDC1Handle.CurPosition, 5, 1);
+
+
+		if(GraphClear_flag == FLAG_SET)
+		{
+			// Erase Graph of Current Position
+			Clear_Graph(&TFT1Handle);
+
+			x = 0;
+			x_prv = 0;
+			y_prv = 0;
+
+			GraphClear_flag = FLAG_RESET;
+
+			TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Trj : ");
+			TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+		}
+		else if(GraphDraw_flag == FLAG_SET)
+		{
+			// Draw Graph of Current Position
+			TFT_Line(&TFT1Handle, 50+x_prv, 215-y_prv, 50+x, 215-y, Magenta);
+			GraphDraw_flag = FLAG_RESET;
+		}
+
+
+		if(Start_key >= FLAG_SET)
+		{
+			Delay_ms(200);		// to Avoid Key chattering
+
+			if(BLDC1Handle.MotorState == MOTOR_STATE_STOP)
+			{
+				Clear_Graph(&TFT1Handle);
+				Delay_ms(10);
+				Draw_axis(&TFT1Handle, State);
+				TFT_String(&TFT1Handle, 25, 20, White, Black, (uint8_t*)"Trj : ");
+				TFT_String(&TFT1Handle, 25, 22, White, Black, (uint8_t*)"Cur : ");
+
+
+				// 1. Set Reference Position and PID gain
+				BLDC_SET_REFERENCE_POSITION(&BLDC1Handle, 36000);
+				BLDC1Handle.TrjRefMaxSpeed = 7500;
+				BLDC1Handle.TrjRefAcceleration = 2000;
+
+				// Draw axis value
+				TFT_Color(&TFT1Handle, Cyan, Black);
+				TFT_xy(&TFT1Handle, 0, 1);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 4 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 7);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)BLDC1Handle.RefPosition, 0, 5);
+				TFT_xy(&TFT1Handle, 0, 13);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 2 / 3), 0, 5);
+				TFT_xy(&TFT1Handle, 0, 20);
+				TFT_Unsigned_decimal(&TFT1Handle, (uint32_t)(BLDC1Handle.RefPosition * 1 / 3), 0, 5);
+
+				// 2. Set PID gain
+				BLDC_PID_GAIN_SET(&BLDC1Handle, 25, 4, 0);
+
+				// 3. Set Direction of Rotation
+				if(BLDC1Handle.RefPosition >= 0)			BLDC1Handle.RotationDir = CW;
+				else if(BLDC1Handle.RefPosition < 0)		BLDC1Handle.RotationDir = CCW;
+
+				// 4. Set Old HallPhase location based on Current HallPhase
+				BLDC_SET_OLD_HALLPHASE(&BLDC1Handle);
+
+				// 5. Charge Bootstrap Capacitor for 10ms
+				BLDC_BootstrapCap_Charge(&BLDC1Handle);
+
+				// 6. Enable EXTI of Hall sensor
+				ENABLE_HALLSENSOR_EXTI();
+
+				// 7. Trigger EXTI interrupt by SW to Execute 'BLDC_Drive' function. (Top Logic On, Bottom PWM On. But TIM_CCR == 0)
+				EXTI->SWIER |= (0x1 << 5);		// The purpose of this line is to trigger EXTI9_5_IRQHandler. So, 5 can be replaced by 6, 7.
+
+				// 8. Reset HallCount value to 0. When EXTI9_5_IRQHandler is triggered, BLDC_Get_Position function increases / dicrease HallCount value by 1
+				BLDC1Handle.HallCount = 0;
+
+				// 9. Change MotorState from MOTOR_STATE_STOP to MOTOR_STATE_POSITION_TRACKING
+				BLDC1Handle.MotorState = MOTOR_STATE_POSITION_TRACKING;
+			}
+
+			else if(BLDC1Handle.MotorState == MOTOR_STATE_POSITION_TRACKING)
+			{
+				// 1. Disable EXTI of Hall sensor
+				DISABLE_HALLSENSOR_EXTI();
+
+				// 2. Clear GPIO pin of Top side(UT, VT, WT)
+				GPIO_WritePin(BLDC1Handle.Init.GPIOx_Top, BLDC1Handle.Init.GPIO_Pins_Top, GPIO_PIN_RESET);
+
+				// 3. Disable All PWM channels
+				DisableTimerPwmChannel(&BLDC1Handle);
+
+				// 4. Change MotorState from MOTOR_STATE_POSITION_TRACKING to MOTOR_STATE_STOP
+				BLDC1Handle.MotorState = MOTOR_STATE_STOP;
+
+				// 5. Reset variables
+				Reset_Position_Variables();
+			}
+
+			Start_key = FLAG_RESET;
+		}
+
+
+		/* If Mode key is pressed when Motor is running, Ignore the Mode key press  */
+		if( (BLDC1Handle.MotorState == MOTOR_STATE_POSITION_TRACKING) && (Mode_key >= FLAG_SET) )
+		{
+			Mode_key = FLAG_RESET;
+		}
+
+		/* If Mode key is pressed when Motor is stopped, Return to the Menu state  */
+		else if( (BLDC1Handle.MotorState == MOTOR_STATE_STOP) && (Mode_key >= FLAG_SET) )
+		{
+			State = STATE_MENU;
+			Mode_key = FLAG_RESET;
+			break;
+		}
+	}
+}
+
+
+void State_End(void)
+{
+	TFT_String(&TFT1Handle, 5, 15, White, Black, (uint8_t*)"End mode is selected");
+	Delay_ms(100);
+
+	while(1)
+	{
+		if(Start_key >= 1)
+		{
+			State = STATE_MENU;
+			Start_key = 0;
+			break;
+		}
+	}
+}
+
+
+void Reset_All_Variables(void)
+{
+	BLDC1Handle.MotorState = MOTOR_STATE_STOP;
+	BLDC1Handle.HallCount = 0;
+	BLDC1Handle.OldHallCount = 0;
+	BLDC1Handle.CurSpeed = 0;
+	BLDC1Handle.RefSpeed = 0;
+	BLDC1Handle.CurPosition = 0;
+	BLDC1Handle.RefPosition = 0;
+	BLDC1Handle.PrvRefPosition = 0;
+	BLDC1Handle.TrjCurPosition = 0;
+	BLDC1Handle.TrjCurSpeed = 0;
+	BLDC1Handle.TrjRefMaxSpeed = 0;
+	BLDC1Handle.TrjRefAcceleration = 0;
+	BLDC1Handle.TrjDtAcceleration = 0;
+	BLDC1Handle.Kp = 0;
+	BLDC1Handle.Ki = 0;
+	BLDC1Handle.Kd = 0;
+	BLDC1Handle.Error = 0;
+	BLDC1Handle.PrvError = 0;
+	BLDC1Handle.P_term = 0;
+	BLDC1Handle.I_term = 0;
+	BLDC1Handle.D_term = 0;
+	BLDC1Handle.PwmPID = 0;
+
+	/* Graph variables */
+	TFT_Color(&TFT1Handle, White, Black);
+	x = 0;
+	y = 0;
+	x_prv = 0;
+	y_prv = 0;
+}
+
+
+void Reset_Speed_Variables(void)
+{
+	BLDC1Handle.HallCount = 0;
+	BLDC1Handle.OldHallCount = 0;
+	BLDC1Handle.CurSpeed = 0;
+	BLDC1Handle.RefSpeed = 0;
+	BLDC1Handle.Kp = 0;
+	BLDC1Handle.Ki = 0;
+	BLDC1Handle.Kd = 0;
+	BLDC1Handle.Error = 0;
+	BLDC1Handle.PrvError = 0;
+	BLDC1Handle.P_term = 0;
+	BLDC1Handle.I_term = 0;
+	BLDC1Handle.D_term = 0;
+	BLDC1Handle.PwmPID = 0;
+
+	/* Graph variables */
+	TFT_Color(&TFT1Handle, White, Black);
+	x = 0;
+	y = 0;
+	x_prv = 0;
+	y_prv = 0;
+}
+
+
+void Reset_Position_Variables(void)
+{
+	BLDC1Handle.HallCount = 0;
+	BLDC1Handle.OldHallCount = 0;
+	BLDC1Handle.CurPosition = 0;
+	BLDC1Handle.RefPosition = 0;
+	BLDC1Handle.PrvRefPosition = 0;
+	BLDC1Handle.TrjCurPosition = 0;
+	BLDC1Handle.TrjCurSpeed = 0;
+	BLDC1Handle.TrjRefMaxSpeed = 0;
+	BLDC1Handle.TrjRefAcceleration = 0;
+	BLDC1Handle.TrjDtAcceleration = 0;
+	BLDC1Handle.Kp = 0;
+	BLDC1Handle.Ki = 0;
+	BLDC1Handle.Kd = 0;
+	BLDC1Handle.Error = 0;
+	BLDC1Handle.PrvError = 0;
+	BLDC1Handle.P_term = 0;
+	BLDC1Handle.I_term = 0;
+	BLDC1Handle.D_term = 0;
+	BLDC1Handle.PwmPID = 0;
+
+	/* Graph variables */
+	TFT_Color(&TFT1Handle, White, Black);
+	x = 0;
+	y = 0;
+	x_prv = 0;
+	y_prv = 0;
+}
+
+
+void Draw_axis(TFT_HandleTypeDef *pTFTHandle, uint8_t state)
+{
+	// Draw X-axis
+	TFT_Line(pTFTHandle, 50, 216, 310, 216, White);
+	TFT_Line(pTFTHandle, 305, 211, 310, 211, White);
+	TFT_Line(pTFTHandle, 305, 221, 310, 216, White);
+	TFT_Line(pTFTHandle, 100, 216, 100, 220, White);
+	TFT_Line(pTFTHandle, 150, 216, 150, 220, White);
+	TFT_Line(pTFTHandle, 200, 216, 200, 220, White);
+	TFT_Line(pTFTHandle, 250, 216, 250, 220, White);
+	TFT_Line(pTFTHandle, 300, 216, 300, 220, White);
+
+	if(state == STATE_SPEED)
+	{
+		TFT_String(pTFTHandle, 16, 0, White, Blue, (uint8_t *)"Speed Graph");
+
+		TFT_Color(pTFTHandle, Cyan, Black);
+		TFT_English_pixel(pTFTHandle, 35, 222, '0');
+
+		TFT_English_pixel(pTFTHandle, 97, 222, '5');
+
+		TFT_English_pixel(pTFTHandle, 143, 222, '1');
+		TFT_English_pixel(pTFTHandle, 151, 222, '0');
+
+		TFT_English_pixel(pTFTHandle, 193, 222, '1');
+		TFT_English_pixel(pTFTHandle, 201, 222, '5');
+
+		TFT_English_pixel(pTFTHandle, 243, 222, '2');
+		TFT_English_pixel(pTFTHandle, 251, 222, '0');
+
+		TFT_English_pixel(pTFTHandle, 293, 222, '2');
+		TFT_English_pixel(pTFTHandle, 301, 222, '5');
+	}
+	else if(state == STATE_POSITION)
+	{
+		TFT_String(pTFTHandle, 14, 0, White, Blue, (uint8_t *)"Position Graph");
+
+		TFT_Color(pTFTHandle, Cyan, Black);
+		TFT_English_pixel(pTFTHandle, 35, 222, '0');
+
+		TFT_English_pixel(pTFTHandle, 89, 222, '0');
+		TFT_English_pixel(pTFTHandle, 97, 222, '.');
+		TFT_English_pixel(pTFTHandle, 105, 222, '6');
+
+		TFT_English_pixel(pTFTHandle, 139, 222, '1');
+		TFT_English_pixel(pTFTHandle, 147, 222, '.');
+		TFT_English_pixel(pTFTHandle, 155, 222, '2');
+
+		TFT_English_pixel(pTFTHandle, 189, 222, '1');
+		TFT_English_pixel(pTFTHandle, 197, 222, '.');
+		TFT_English_pixel(pTFTHandle, 206, 222, '9');
+
+		TFT_English_pixel(pTFTHandle, 239, 222, '2');
+		TFT_English_pixel(pTFTHandle, 247, 222, '.');
+		TFT_English_pixel(pTFTHandle, 255, 222, '5');
+	}
+	else if(state == STATE_POSITION_TRACKING)
+	{
+		TFT_String(pTFTHandle, 10, 0, White, Blue, (uint8_t *)"Position Tracking Graph");
+
+		TFT_Color(pTFTHandle, Cyan, Black);
+		TFT_English_pixel(pTFTHandle, 35, 222, '0');
+
+		TFT_English_pixel(pTFTHandle, 89, 222, '0');
+		TFT_English_pixel(pTFTHandle, 97, 222, '.');
+		TFT_English_pixel(pTFTHandle, 105, 222, '6');
+
+		TFT_English_pixel(pTFTHandle, 139, 222, '1');
+		TFT_English_pixel(pTFTHandle, 147, 222, '.');
+		TFT_English_pixel(pTFTHandle, 155, 222, '2');
+
+		TFT_English_pixel(pTFTHandle, 189, 222, '1');
+		TFT_English_pixel(pTFTHandle, 197, 222, '.');
+		TFT_English_pixel(pTFTHandle, 206, 222, '9');
+
+		TFT_English_pixel(pTFTHandle, 239, 222, '2');
+		TFT_English_pixel(pTFTHandle, 247, 222, '.');
+		TFT_English_pixel(pTFTHandle, 255, 222, '5');
+	}
+
+	//	TFT_Color(pTFTHandle, Cyan, Black);
+	//	TFT_English_pixel(pTFTHandle, 35, 222, '0');
+	//	TFT_English_pixel(pTFTHandle, 97, 222, '1');
+	//	TFT_English_pixel(pTFTHandle, 147, 222, '2');
+	//	TFT_English_pixel(pTFTHandle, 197, 222, '3');
+	//	TFT_English_pixel(pTFTHandle, 247, 222, '4');
+	//	TFT_English_pixel(pTFTHandle, 297, 222, '5');
+		TFT_Color(pTFTHandle, Magenta, Black);
+		TFT_English_pixel(pTFTHandle, 288, 222, '[');
+		TFT_English_pixel(pTFTHandle, 296, 222, 's');
+		TFT_English_pixel(pTFTHandle, 304, 222, ']');
+
+
+	// Draw Y-axis
+	TFT_Line(pTFTHandle, 49, 215, 49, 5, White);
+	TFT_Line(pTFTHandle, 44, 10, 49, 5, White);
+	TFT_Line(pTFTHandle, 54, 10, 49, 5, White);
+	TFT_Line(pTFTHandle, 45, 165, 49, 165, White);
+	TFT_Line(pTFTHandle, 45, 115, 49, 115, White);
+	TFT_Line(pTFTHandle, 45, 65, 49, 65, White);
+	TFT_Line(pTFTHandle, 45, 15, 49, 15, White);
+}
+
+
+void Draw_Graph(TFT_HandleTypeDef *pTFTHandle)
+{
+
+}
+
+
+void Clear_Graph(TFT_HandleTypeDef *pTFTHandle)
+{
+	TFT_Write(pTFTHandle, 0x02, 50U >> 8);
+	TFT_Write(pTFTHandle, 0x03, 50U & 0x00FF);
+	TFT_Write(pTFTHandle, 0x04, 300U >> 8);
+	TFT_Write(pTFTHandle, 0x05, 300U & 0x00FF);
+
+	TFT_Write(pTFTHandle, 0x06, 0x0000);
+	TFT_Write(pTFTHandle, 0x07, 15U);
+	TFT_Write(pTFTHandle, 0x08, 0x0000);
+	TFT_Write(pTFTHandle, 0x09, 215U);
+
+	TFT_Command(pTFTHandle, 0x22);
+
+	for(uint16_t i = 0; i < 251; i++)
+	{
+		for(uint16_t j = 0; j < 201; j++)
+		{
+			TFT_Data(pTFTHandle, Black);
+		}
+	}
+
+	/* Reset Content of Address registers to initial value  */
+	TFT_Write(pTFTHandle, 0x02, 0x0000);
+	TFT_Write(pTFTHandle, 0x03, 0x0000);
+	TFT_Write(pTFTHandle, 0x04, 0x0001);
+	TFT_Write(pTFTHandle, 0x05, 0x003F);
+	TFT_Write(pTFTHandle, 0x06, 0x0000);
+	TFT_Write(pTFTHandle, 0x07, 0x0000);
+	TFT_Write(pTFTHandle, 0x08, 0x0000);
+	TFT_Write(pTFTHandle, 0x09, 0x00EF);
+
+	TFT_Command(pTFTHandle, 0x22);
+}
+
 
 void MemsetHandleStructure(void)
 {
