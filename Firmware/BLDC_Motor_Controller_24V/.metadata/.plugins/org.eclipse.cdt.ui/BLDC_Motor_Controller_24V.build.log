@@ -1,10 +1,10 @@
-13:09:49 **** Incremental Build of configuration Debug for project BLDC_Motor_Controller_24V ****
+17:46:17 **** Incremental Build of configuration Debug for project BLDC_Motor_Controller_24V ****
 make -j8 all 
 arm-none-eabi-size   BLDC_Motor_Controller_24V.elf 
    text	   data	    bss	    dec	    hex	filename
-  41632	    480	   2272	  44384	   ad60	BLDC_Motor_Controller_24V.elf
+  56108	    484	   2328	  58920	   e628	BLDC_Motor_Controller_24V.elf
 Finished building: default.size.stdout
  
 
-13:09:51 Build Finished. 0 errors, 0 warnings. (took 2s.533ms)
+17:46:19 Build Finished. 0 errors, 0 warnings. (took 2s.403ms)
 

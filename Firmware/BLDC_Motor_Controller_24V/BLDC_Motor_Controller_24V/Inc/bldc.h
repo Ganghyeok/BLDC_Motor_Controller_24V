@@ -28,6 +28,7 @@
 #define MOTOR_STATE_SPEED						1
 #define MOTOR_STATE_POSITION					2
 #define MOTOR_STATE_POSITION_TRACKING			3
+#define MOTOR_STATE_RECHARGE					4
 #define CW										0
 #define CCW										1
 

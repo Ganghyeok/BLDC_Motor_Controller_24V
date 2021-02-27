@@ -58,6 +58,10 @@ typedef struct
 
 	uint8_t				YcharacterLimit;
 
+	uint8_t				XcharacterLimit_Large;
+
+	uint8_t				YcharacterLimit_Large;
+
 	uint8_t				Xcharacter;
 
 	uint8_t				Ycharacter;
@@ -145,7 +149,9 @@ void TFT_Cursor(TFT_HandleTypeDef *pTFTHandle, uint16_t cursor_color);
 void TFT_Underscore(TFT_HandleTypeDef *pTFTHandle, uint16_t underscore_color);
 void TFT_Outline(TFT_HandleTypeDef *pTFTHandle, uint16_t outline_color);
 void TFT_String(TFT_HandleTypeDef *pTFTHandle, uint8_t xChar, uint8_t yChar, uint16_t colorfore, uint16_t colorback, uint8_t *str);
+void TFT_String_Large(TFT_HandleTypeDef *pTFTHandle, uint8_t xChar, uint8_t yChar, uint16_t colorfore, uint16_t colorback, uint8_t *str);
 void TFT_English(TFT_HandleTypeDef *pTFTHandle, uint8_t code);
+void TFT_English_Large(TFT_HandleTypeDef *pTFTHandle, uint8_t code);
 void TFT_English_pixel(TFT_HandleTypeDef *pTFTHandle, uint16_t Xpixel, uint16_t Ypixel, uint8_t code);
 void TFT_Binary(TFT_HandleTypeDef *pTFTHandle, uint32_t number, uint8_t digit);
 void TFT_Unsigned_decimal(TFT_HandleTypeDef *pTFTHandle, uint32_t number, uint8_t zerofill, uint8_t digit);

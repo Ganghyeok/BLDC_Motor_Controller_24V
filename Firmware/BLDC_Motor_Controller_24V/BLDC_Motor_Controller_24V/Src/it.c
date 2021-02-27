@@ -30,6 +30,7 @@ void EXTI0_IRQHandler(void)
 {
 	EXTI_IRQHandling(GPIO_PIN_0);
 
+
 //	EXTI->PR |= GPIO_PIN_0;		// Clear the pending event from EXTI line
 //
 //	if(Mode_key >= 3)

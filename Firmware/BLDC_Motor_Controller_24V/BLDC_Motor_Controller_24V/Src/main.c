@@ -24,7 +24,6 @@ int main(void)
 {
 	// 1. System Clock configuration to 72MHz
 	SystemClock_Config(SYSCLK_FREQ_72MHZ);
-
 	Delay_ms(1000);
 
 	// 2. Clear All members of Handle structures to 0
@@ -41,9 +40,7 @@ int main(void)
 	TIM6_Init();				// Initialize TIM6 to generate interrupt of 1ms period
 	TFT1_Init();
 	TS1_Init();
-	SPI_ENABLE(&SPI2Handle);
 	Delay_ms(10);
-
 
 	// 4. Start PWM for UB, VB, WB
 	StartTimerPwm(&BLDC1Handle);
@@ -64,8 +61,12 @@ int main(void)
 	TFT1Handle.foreground = White;
 	TFT1Handle.background = Black;
 
-	TFT_String(&TFT1Handle, 9, 10, White, Black, (uint8_t*)"BLDC Motor Controller");
-	TFT_String(&TFT1Handle, 7, 15, White, Black, (uint8_t*)"Designed by Ganghyeok Lim");
+	TFT_Cursor(&TFT1Handle, Green);
+	TFT1Handle.Xcursor = 9;
+	TFT1Handle.Ycursor = 25;
+	TFT_String_Large(&TFT1Handle, 3, 10, White, Black, (uint8_t*)"BLDC Motor Controller");	// 9, 10
+	TFT_String_Large(&TFT1Handle, 9, 15, White, Black, (uint8_t*)"Ver 2.0A");
+	TFT_String(&TFT1Handle, 7, 25, White, Black, (uint8_t*)"Designed by Ganghyeok Lim");	// 7, 15
 	Delay_ms(1000);
 
 	TFT_Clear_Screen(&TFT1Handle);
@@ -98,12 +99,6 @@ int main(void)
 			case STATE_POSITION_TRACKING :
 			{
 				State_Position_Tracking();
-				break;
-			}
-
-			case STATE_END :
-			{
-				State_End();
 				break;
 			}
 

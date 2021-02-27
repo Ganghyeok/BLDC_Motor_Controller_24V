@@ -157,7 +157,7 @@ void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 	TIM_DISABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
-	Delay_ms(10);
+	//Delay_ms(10);
 
 	// 2. Re-initialize GPIO pins from TIM PWM channels to GPIO Output mode
 	GPIO_InitTypeDef GPIOInit;
@@ -170,11 +170,11 @@ void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	GPIO_Init(pBLDCHandle->Init.GPIOx_Bottom, &GPIOInit);
-	Delay_ms(10);
+	//Delay_ms(10);
 
 	// 4. Charge Bootstrap Capacitor for 10ms
 	GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_SET);
-	Delay_ms(10);
+	Delay_ms(1);
 	GPIO_WritePin(pBLDCHandle->Init.GPIOx_Bottom, pBLDCHandle->Init.GPIO_Pins_Bottom, GPIO_PIN_RESET);
 
 	// 5. Re-initialize GPIO pins from GPIO Output mode to TIM PWM channels
@@ -185,13 +185,13 @@ void BLDC_BootstrapCap_Charge(BLDC_HandleTypeDef *pBLDCHandle)
 	GPIOInit.Pull = GPIO_NOPULL;
 	GPIOInit.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	GPIO_Init(pBLDCHandle->Init.GPIOx_Bottom, &GPIOInit);
-	Delay_ms(10);
+	//Delay_ms(10);
 
 	// 6. Enable All PWM channels
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_1);
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_2);
 	TIM_ENABLE_CHANNEL(pBLDCHandle->Init.TIM_Handle, TIM_CHANNEL_3);
-	Delay_ms(10);
+	//Delay_ms(10);
 }
 
 
@@ -428,19 +428,6 @@ void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt
 			}
 			else
 			{
-				double dtTrjPosition;
-
-				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
-
-				if(dtTrjPosition >= 0)
-				{
-					pBLDCHandle->TrjCurPosition += dtTrjPosition;
-				}
-				else
-				{
-					pBLDCHandle->TrjCurPosition = pBLDCHandle->RefPosition;
-				}
-
 //				double dtTrjPosition;
 //
 //				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
@@ -449,6 +436,36 @@ void BLDC_CalculateTrajectoryPosition(BLDC_HandleTypeDef *pBLDCHandle, double dt
 //				{
 //					pBLDCHandle->TrjCurPosition += dtTrjPosition;
 //				}
+//				else
+//				{
+//					pBLDCHandle->TrjCurPosition = pBLDCHandle->RefPosition;
+//				}
+
+
+//				double dtTrjPosition;
+//
+//				static double OldTrjCurPosition = 0;
+//
+//
+//				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+//
+//				pBLDCHandle->TrjCurPosition += dtTrjPosition;
+//
+//				OldTrjCurPosition = pBLDCHandle->TrjCurPosition;
+
+
+				double dtTrjPosition;
+
+				dtTrjPosition = (0.5) * dt * ((2 * pBLDCHandle->TrjCurSpeed) - pBLDCHandle->TrjDtAcceleration);
+
+				pBLDCHandle->TrjCurPosition += dtTrjPosition;
+
+				if(pBLDCHandle->TrjCurSpeed < 0)
+				{
+					pBLDCHandle->TrjCurSpeed = 0;
+					pBLDCHandle->TrjCurPosition = pBLDCHandle->RefPosition;
+				}
+
 			}
 
 			break;

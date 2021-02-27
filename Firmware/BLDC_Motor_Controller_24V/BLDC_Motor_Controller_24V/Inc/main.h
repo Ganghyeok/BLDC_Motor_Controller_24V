@@ -47,13 +47,30 @@ extern SPI_HandleTypeDef 						SPI2Handle;
 
 /* Status Flags */
 extern uint8_t 									State;
+extern uint8_t 									State_option;
+extern uint8_t 									Recharge_flag;
 
-/* Key Count Variables */
+/* Key Variables */
 extern int32_t 									Mode_key;				// Count of 'MODE' Key
 extern int32_t 									Up_key;					// Count of 'UP' Key
 extern int32_t									Down_key;				// Count of 'DOWN' Key
 extern int32_t 									Start_key;				// Count of 'START/STOP' Key
-extern int32_t 									EmergencyStop_key;		// Count of 'Emergency STOP' Key
+
+extern uint8_t 									KeyFlag_Mode;
+extern uint8_t 									KeyFlag_Up;
+extern uint8_t 									KeyFlag_Down;
+extern uint8_t 									KeyFlag_Start;
+
+extern uint32_t 								KeyTime_Mode;
+extern uint32_t 								KeyTime_Up;
+extern uint32_t 								KeyTime_Down;
+extern uint32_t 								KeyTime_Start;
+
+/* Touch Screen Variables */
+extern uint8_t 									TouchDetection_flag;
+extern uint32_t 								TouchTime;
+extern uint16_t 								xTouch_log;
+extern uint16_t 								yTouch_log;
 
 /* Strings for UART */
 extern char 									MotorSpeedStr[6];
@@ -81,6 +98,10 @@ extern void Test_Init(void);
 
 /* Extern Callback functions */
 extern void TIM_PeriodElapsedCallback(TIM_HandleTypeDef *pTIMHandle);
+extern void BLDC_SpeedMode(void);
+extern void BLDC_PositionMode(void);
+extern void Detect_KeyInput(void);
+extern void Detect_TouchScreenInput(void);
 extern void EXTI_Callback(uint32_t GPIO_Pin);
 
 
@@ -89,7 +110,6 @@ extern void State_Menu(void);
 extern void State_Speed(void);
 extern void State_Position(void);
 extern void State_Position_Tracking(void);
-extern void State_End(void);
 extern void Reset_All_Variables(void);
 extern void Reset_Speed_Variables(void);
 extern void Reset_Position_Variables(void);
